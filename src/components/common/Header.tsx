@@ -1,33 +1,81 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Cross2Icon } from '@radix-ui/react-icons';
+import { Locale } from '@/app/i18n/config';
+import { getDictionary } from '@/app/i18n/config';
+import { Dictionary } from '@/types';
+import { ConnectButton } from './ConnectButton';
 
-export default function Header() {
-  const [currentLang, setCurrentLang] = useState<'en' | 'zh'>('en');
+export interface NavLink {
+  href: string;
+  pathMatch: string;
+  label: string;
+  comingSoon?: boolean;
+}
+
+const createNavLinks = (t: Dictionary): NavLink[] => [
+  {
+    href: '/',
+    pathMatch: '/',
+    label: t.nav.home,
+  },
+  {
+    href: '/staking',
+    pathMatch: '/staking',
+    label: t.nav.staking,
+  },
+  {
+    href: '#',
+    pathMatch: '/marketplace',
+    label: t.nav.marketplace,
+    comingSoon: true,
+  },
+];
+
+interface HeaderProps {
+  lang: Locale;
+}
+
+export default function Header({ lang }: HeaderProps) {
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const [dictionary, setDictionary] = useState<Dictionary | null>(null);
+  const [navLinks, setNavLinks] = useState<NavLink[]>([]);
   const pathname = usePathname();
+  const router = useRouter();
 
-  const navLinks = [
-    { href: '/', label: { en: 'Home', zh: '首页' } },
-    { href: '/staking', label: { en: 'Staking', zh: '质押' } },
-    {
-      href: '#',
-      label: { en: 'Marketplace', zh: '市场' },
-      comingSoon: true,
-    },
-  ];
+  useEffect(() => {
+    const loadDictionary = async () => {
+      const dict = await getDictionary(lang);
+      setDictionary(dict);
+      setNavLinks(createNavLinks(dict));
+    };
+    loadDictionary();
+  }, [lang]);
 
-  const handleNavClick = (link: (typeof navLinks)[0]) => {
+  const handleNavClick = (link: NavLink, e: React.MouseEvent) => {
     if (link.comingSoon) {
+      e.preventDefault();
       setShowComingSoon(true);
       setTimeout(() => setShowComingSoon(false), 3000);
-      return;
     }
   };
+
+  const switchLanguage = () => {
+    const newLang = lang === 'en' ? 'zh' : 'en';
+    // 获取当前路径，并确保以 / 开头
+    const currentPath = pathname.replace(`/${lang}`, '') || '/';
+    router.push(`/${newLang}${currentPath}`);
+  };
+  const isActivePath = (pathMatch: string) => {
+    const currentPath = pathname.replace(`/${lang}`, '') || '/';
+    return pathMatch === currentPath;
+  };
+
+  if (!dictionary) return null;
 
   return (
     <>
@@ -38,7 +86,7 @@ export default function Header() {
               <Link href="/">
                 <Image
                   src="/logo.svg"
-                  alt="Aladdin"
+                  alt="Logo"
                   width={150}
                   height={29}
                   priority
@@ -50,65 +98,58 @@ export default function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={(e) => {
-                    if (link.comingSoon) {
-                      e.preventDefault();
-                      handleNavClick(link);
-                    }
-                  }}
+                  onClick={(e) => handleNavClick(link, e)}
                   className={`px-4 py-2 rounded transition-colors ${
-                    pathname === link.href
+                    isActivePath(link.pathMatch)
                       ? 'bg-[#1890ff] text-white'
                       : 'text-[#333] hover:bg-gray-50'
                   }`}
                 >
-                  {currentLang === 'en' ? link.label.en : link.label.zh}
+                  {link.label}
                 </Link>
               ))}
             </nav>
           </div>
+
           <div className="flex items-center gap-5">
             <div className="flex items-center mr-5">
-              {/* iOS style language switch */}
               <div
                 className="relative h-7 bg-gray-100 rounded-full p-0.5 flex items-center w-[108px] cursor-pointer"
-                onClick={() =>
-                  setCurrentLang(currentLang === 'en' ? 'zh' : 'en')
-                }
+                onClick={switchLanguage}
               >
-                {/* Sliding background */}
                 <div
                   className={`
-                  absolute w-[52px] h-6 bg-[#1890ff] rounded-full transition-all duration-200 ease-in-out
-                  ${currentLang === 'en' ? 'left-0.5' : 'left-[52px]'}
-                `}
+                    absolute w-[52px] h-6 bg-[#1890ff] rounded-full transition-all duration-200 ease-in-out
+                    ${lang === 'en' ? 'left-0.5' : 'left-[52px]'}
+                  `}
                 />
-                {/* Text labels */}
                 <span
                   className={`relative z-10 flex-1 text-center text-xs font-medium transition-colors duration-200
-                      ${currentLang === 'en' ? 'text-white' : 'text-gray-500'}`}
+                    ${lang === 'en' ? 'text-white' : 'text-gray-500'}`}
                 >
                   EN
                 </span>
                 <span
                   className={`relative z-10 flex-1 text-center text-xs font-medium transition-colors duration-200
-                      ${currentLang === 'zh' ? 'text-white' : 'text-gray-500'}`}
+                    ${lang === 'zh' ? 'text-white' : 'text-gray-500'}`}
                 >
                   中文
                 </span>
               </div>
             </div>
-            <button className="px-5 py-2 rounded-full bg-[#1890ff] text-white hover:bg-[#40a9ff] transition-colors text-sm">
-              {currentLang === 'en' ? 'Connect Wallet' : '连接钱包'}
-            </button>
+
+            {/* <button className="px-5 py-2 rounded-full bg-[#1890ff] text-white hover:bg-[#40a9ff] transition-colors text-sm">
+              {dictionary.button.connect_wallet}
+            </button> */}
+
+            <ConnectButton connectText={dictionary.button.connect_wallet} />
           </div>
         </div>
       </header>
 
-      {/* Coming Soon Alert */}
       {showComingSoon && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50">
-          <span>{currentLang === 'en' ? 'Coming Soon!' : '即将上线！'}</span>
+          <span>{dictionary.alert.coming_soon}</span>
           <button
             onClick={() => setShowComingSoon(false)}
             className="text-white/60 hover:text-white transition-colors"

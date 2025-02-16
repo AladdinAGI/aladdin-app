@@ -1,8 +1,8 @@
-import AgentContracts from '../../components/staking/AgentContracts';
-import ApyComparisonChart from '../../components/staking/ApyComparisonChart';
-import EarningsChart from '../../components/staking/EarningsChart';
-import StakingDistribution from '../../components/staking/StakingDistribution';
-import StakingStats from '../../components/staking/StakingStats';
+import AgentContracts from '@/components/staking/AgentContracts';
+import ApyComparisonChart from '@/components/staking/ApyComparisonChart';
+import EarningsChart from '@/components/staking/EarningsChart';
+import StakingDistribution from '@/components/staking/StakingDistribution';
+import StakingStats from '@/components/staking/StakingStats';
 
 export default function StakingPage() {
   return (

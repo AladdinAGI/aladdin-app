@@ -1,7 +1,7 @@
 // app/page.tsx
-import ChatPanel from '../components/Home/ChatPanel';
-import ContractPanel from '../components/Home/ContractPanel';
-import HistoryPanel from '../components/Home/HistoryPanel';
+import ChatPanel from '@/components/Home/ChatPanel';
+import ContractPanel from '@/components/Home/ContractPanel';
+import HistoryPanel from '@/components/Home/HistoryPanel';
 
 export default function Home() {
   return (

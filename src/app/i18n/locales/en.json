@@ -1,0 +1,13 @@
+{
+  "nav": {
+    "home": "Home",
+    "staking": "Staking",
+    "marketplace": "Marketplace"
+  },
+  "button": {
+    "connect_wallet": "Connect Wallet"
+  },
+  "alert": {
+    "coming_soon": "Coming Soon!"
+  }
+}

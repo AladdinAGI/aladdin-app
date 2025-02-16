@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Theme } from '@radix-ui/themes';
-import Header from '../components/common/Header';
+import Header from '@/components/common/Header';
+import { Locale } from '@/app/i18n/config';
+import { Web3Provider } from '@/components/common/Web3Provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -19,19 +21,28 @@ export const metadata: Metadata = {
   description: 'Aladdin AI',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+interface RootLayoutProps {
   children: React.ReactNode;
-}>) {
+  params: Promise<{ lang: Locale }>;
+}
+
+export default async function RootLayout({
+  children,
+  params,
+}: RootLayoutProps) {
+  // 等待 params 解析
+  const resolvedParams = await params;
+
   return (
-    <html lang="en">
+    <html lang={resolvedParams.lang}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Theme>
-          <Header />
-          {children}
+          <Web3Provider>
+            <Header lang={resolvedParams.lang} />
+            {children}
+          </Web3Provider>
         </Theme>
       </body>
     </html>

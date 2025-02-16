@@ -1,10 +1,13 @@
-export interface ToolInfo {
-  name: {
-    en: string;
-    zh: string;
+export interface Dictionary {
+  nav: {
+    home: string;
+    staking: string;
+    marketplace: string;
   };
-  examples: {
-    en: string[];
-    zh: string[];
+  button: {
+    connect_wallet: string;
+  };
+  alert: {
+    coming_soon: string;
   };
 }

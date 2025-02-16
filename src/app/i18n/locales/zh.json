@@ -1,0 +1,13 @@
+{
+  "nav": {
+    "home": "首页",
+    "staking": "质押",
+    "marketplace": "市场"
+  },
+  "button": {
+    "connect_wallet": "连接钱包"
+  },
+  "alert": {
+    "coming_soon": "即将上线！"
+  }
+}
