@@ -1,6 +1,4 @@
-import { ToolInfo } from '@/types';
-
-export const toolsInfo: ToolInfo[] = [
+export const toolsInfo = [
   {
     name: { en: '💰 Token Information', zh: '💰 代币信息' },
     examples: {
