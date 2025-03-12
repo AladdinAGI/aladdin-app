@@ -2,12 +2,60 @@
   "nav": {
     "home": "首页",
     "staking": "质押",
-    "marketplace": "市场"
+    "marketplace": "市场",
+    "dashboard": "面板",
+    "professional": "专业版"
   },
   "button": {
     "connect_wallet": "连接钱包"
   },
   "alert": {
     "coming_soon": "即将上线！"
+  },
+  "login": {
+    "title": "账户登录",
+    "register_title": "注册账户",
+    "email_placeholder": "邮箱",
+    "password_placeholder": "密码",
+    "confirm_password": "确认密码",
+    "username_placeholder": "用户名",
+    "login_button": "登录",
+    "register_button": "注册",
+    "processing": "正在处理...",
+    "show_password": "显示",
+    "hide_password": "隐藏",
+    "google_login": "使用谷歌登录",
+    "google_register": "使用谷歌注册",
+    "no_account": "还没有账号？",
+    "has_account": "已有账号？",
+    "register_now": "立即注册",
+    "go_to_login": "去登录",
+    "forgot_password": "忘记密码？",
+    "error_required_fields": "所有字段都是必填的",
+    "error_passwords_mismatch": "两次输入的密码不一致",
+    "error_invalid_credentials": "邮箱或密码无效"
+  },
+  "dashboard": {
+    "title": "专业版Agents投资",
+    "marketData": "市场数据",
+    "investmentPerformance": "投资表现",
+    "assetDistribution": "资产配置占比",
+    "monthlyReturns": "月度收益",
+    "investmentTrends": "投资趋势",
+    "investmentComparison": "投资策略对比",
+    "primaryMarket": "一级市场",
+    "secondaryMarket": "二级市场",
+    "cashFuturesArbitrage": "期现套利",
+    "derivatives": "合约交易",
+    "otherStrategies": "其他策略",
+    "strategyName": "策略名称",
+    "targetAllocation": "目标配置",
+    "actualAllocation": "实际配置",
+    "deviation": "偏差",
+    "averageReturns": "平均收益率（%）",
+    "monthlyTrends": "月度收益率趋势（%）",
+    "month": "月份",
+    "average": "平均",
+    "targetAchievement": "目标达成率"
   }
 }

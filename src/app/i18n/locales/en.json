@@ -2,12 +2,81 @@
   "nav": {
     "home": "Home",
     "staking": "Staking",
-    "marketplace": "Marketplace"
+    "marketplace": "Marketplace",
+    "dashboard": "Dashboard",
+    "professional": "Professional"
   },
   "button": {
     "connect_wallet": "Connect Wallet"
   },
   "alert": {
     "coming_soon": "Coming Soon!"
+  },
+  "login": {
+    "title": "Account Login",
+    "register_title": "Register Account",
+    "email_placeholder": "Email",
+    "password_placeholder": "Password",
+    "confirm_password": "Confirm Password",
+    "username_placeholder": "Username",
+    "login_button": "Login",
+    "register_button": "Register",
+    "processing": "Processing...",
+    "show_password": "Show",
+    "hide_password": "Hide",
+    "google_login": "Sign in with Google",
+    "google_register": "Register with Google",
+    "no_account": "Don't have an account?",
+    "has_account": "Already have an account?",
+    "register_now": "Register now",
+    "go_to_login": "Login",
+    "forgot_password": "Forgot password?",
+    "error_required_fields": "All fields are required",
+    "error_passwords_mismatch": "Passwords do not match",
+    "error_invalid_credentials": "Invalid email or password"
+  },
+  "marketplace": {
+    "search": "Search AI Agent...",
+    "popularAgents": "Popular AI Agents",
+    "allAgents": "All AI Agents",
+    "results": "results",
+    "pricePerUse": "USDT/use",
+    "viewDetails": "View Details",
+    "categories": {
+      "all": "All",
+      "finance": "Finance",
+      "development": "Development",
+      "data": "Data",
+      "content": "Content",
+      "legal": "Legal",
+      "marketing": "Marketing",
+      "research": "Research",
+      "healthcare": "Healthcare"
+    },
+    "reviews": "reviews",
+    "abilities": "Abilities:"
+  },
+  "dashboard": {
+    "title": "Professional Agents Investment",
+    "marketData": "Market Data",
+    "investmentPerformance": "Investment Performance",
+    "assetDistribution": "Asset Allocation",
+    "monthlyReturns": "Monthly Returns",
+    "investmentTrends": "Investment Trends",
+    "investmentComparison": "Investment Strategy Comparison",
+    "primaryMarket": "Primary Market",
+    "secondaryMarket": "Secondary Market",
+    "cashFuturesArbitrage": "Cash-Futures Arbitrage",
+    "derivatives": "Derivatives",
+    "otherStrategies": "Other Strategies",
+    "strategyName": "Strategy Name",
+    "targetAllocation": "Target Allocation",
+    "actualAllocation": "Actual Allocation",
+    "deviation": "Deviation",
+    "averageReturns": "Average Returns (%)",
+    "monthlyTrends": "Monthly Return Trends (%)",
+    "month": "Month",
+    "average": "Average",
+    "targetAchievement": "Target Achievement"
   }
 }

@@ -13,13 +13,9 @@ export function ConnectButton({
     <ConnectKitButton.Custom>
       {({ isConnected, show, truncatedAddress }) => {
         return (
-          <button
-            onClick={show}
-            type="button"
-            className="px-5 py-2 rounded-full bg-[#1890ff] text-white hover:bg-[#40a9ff] transition-colors text-sm"
-          >
+          <a href={isConnected ? undefined : '#'} onClick={show}>
             {isConnected ? truncatedAddress : connectText}
-          </button>
+          </a>
         );
       }}
     </ConnectKitButton.Custom>

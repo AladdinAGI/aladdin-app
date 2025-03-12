@@ -1,31 +1,35 @@
 'use client';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { mainnet } from 'wagmi/chains';
+import { mainnet, sepolia } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConnectKitProvider, getDefaultConfig } from 'connectkit';
 
+// 定义配置
 const config = createConfig(
   getDefaultConfig({
-    // Your dApps chains
-    chains: [mainnet],
+    // 支持的链：ETH主网和Sepolia测试网
+    chains: [mainnet, sepolia],
     transports: {
-      // RPC URL for each chain
+      // 各链的RPC URL
       [mainnet.id]: http(
         `https://mainnet.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`
       ),
+      [sepolia.id]: http(
+        `https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`
+      ),
     },
 
-    // Required API Keys
+    // 必需的API密钥
     walletConnectProjectId:
       process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
 
-    // Required App Info
-    appName: 'Your App Name',
+    // 项目信息
+    appName: 'Aladin',
     ssr: true,
-    // Optional App Info
-    appDescription: 'Your App Description',
-    appUrl: 'https://family.co', // your app's url
-    appIcon: 'https://family.co/logo.png', // your app's icon, no bigger than 1024x1024px (max. 1MB)
+    appDescription:
+      'Aladdin is an AI chat interface powered by coordinated learning agents through algorithmic contracts to solve complex tasks. Each principal acts as a domain-specific expert, handling complex workflows like research, trading, and data analysis-automating from DeFi to every industry.',
+    appUrl: 'https://aladdinagi.xyz/',
+    appIcon: 'https://aladdinagi.xyz/favicon.ico',
   })
 );
 
@@ -37,7 +41,15 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <ConnectKitProvider theme="nouns" mode="light">
+        <ConnectKitProvider
+          theme="nouns"
+          mode="light"
+          options={{
+            initialChainId: 11155111,
+            hideNoWalletCTA: false,
+            embedGoogleFonts: true,
+          }}
+        >
           {children}
         </ConnectKitProvider>
       </QueryClientProvider>

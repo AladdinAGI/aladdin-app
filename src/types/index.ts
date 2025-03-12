@@ -3,6 +3,7 @@ export interface Dictionary {
     home: string;
     staking: string;
     marketplace: string;
+    professional: string;
   };
   button: {
     connect_wallet: string;
