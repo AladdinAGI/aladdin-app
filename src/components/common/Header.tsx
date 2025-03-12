@@ -94,6 +94,7 @@ export default function Header({ lang }: HeaderProps) {
   }, [pathname]);
 
   const handleNavClick = (link: NavLink, e: React.MouseEvent) => {
+    console.log(link, e);
     // if (link.comingSoon) {
     //   e.preventDefault();
     //   setShowComingSoon(true);

@@ -1,10 +1,9 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import * as echarts from 'echarts';
 import 'echarts-gl';
 import CryptoTickerFooter from '@/components/common/CryptoTickerFooter';
 import { Locale } from '@/app/i18n/config';
-import { getDictionary } from '@/app/i18n/config';
 
 // Define TypeScript interfaces
 interface AssetDistributionItem {
@@ -50,37 +49,16 @@ interface AverageReturnItem {
   };
 }
 
-interface PageProps {
-  params: {
-    lang: Locale;
-  };
+interface DashboardClientProps {
+  lang: Locale;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dictionary: any;
 }
 
-export default function DashboardPage({ params }: PageProps) {
-  // Unwrap params using React.use()
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //@ts-expect-error
-  const unwrappedParams = React.use(params);
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  //@ts-expect-error
-  const lang = unwrappedParams.lang;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [dictionary, setDictionary] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchDictionary = async () => {
-      const dict = await getDictionary(lang);
-      setDictionary(dict);
-    };
-
-    fetchDictionary();
-  }, [lang]);
-
-  if (!dictionary) {
-    return <div>Loading...</div>;
-  }
-
+export default function DashboardClient({
+  lang,
+  dictionary,
+}: DashboardClientProps) {
   return (
     <>
       <div className="min-h-screen bg-[#f0f2f5]">

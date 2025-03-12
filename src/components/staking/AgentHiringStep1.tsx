@@ -98,7 +98,7 @@ export const AgentHiringStep1: React.FC<AgentHiringComponentProps> = ({
     if (hasUpdatedAgentData) {
       setHasUpdatedAgentData(false);
     }
-  }, [hiringData.duration]);
+  }, [hasUpdatedAgentData, hiringData.duration]);
 
   // Handle wallet connection
   const handleConnectWallet = () => {

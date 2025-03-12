@@ -79,7 +79,7 @@ export const CompleteEngagementComponent: React.FC<
         <p className="text-sm">
           Completing an engagement will release the escrowed USDT to the agent.
           This action cannot be undone. Only proceed if you are satisfied with
-          the agent's work.
+          the agent&apos;s work.
         </p>
       </div>
     </div>

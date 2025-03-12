@@ -5,7 +5,7 @@ import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { QuickQuestions } from './QuickQuestions';
 import { MastraClient } from '@mastra/client-js';
 import ReactMarkdown from 'react-markdown';
-import { useAccount, useChainId } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { AgentHiringFlow } from '../staking/AgentHiringFlow';
 import { AgentHiringData } from '../staking/AgentHiringTypes';
 
@@ -230,6 +230,7 @@ export default function MainChat() {
   // 更新 ChatPanel.tsx 中的 handleAgentHiringAction 函数
   // 找到 handleAgentHiringAction 函数并替换为以下代码
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAgentHiringAction = (action: string, data?: any) => {
     console.log(
       '处理雇佣操作:',
