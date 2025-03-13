@@ -1,14 +1,41 @@
 'use client';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { mainnet, sepolia } from 'wagmi/chains';
+import { mainnet, sepolia, Chain } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConnectKitProvider, getDefaultConfig } from 'connectkit';
+
+// Define Monad testnet chain
+const monadTestnet: Chain = {
+  id: 10143,
+  name: 'Monad Testnet',
+  network: 'monad-testnet',
+  nativeCurrency: {
+    name: 'Monad',
+    symbol: 'MONAD',
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://testnet-rpc.monad.xyz'],
+    },
+    public: {
+      http: ['https://testnet-rpc.monad.xyz'],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'Monad Explorer',
+      url: 'https://testnet.monadexplorer.com',
+    },
+  },
+  testnet: true,
+};
 
 // 定义配置
 const config = createConfig(
   getDefaultConfig({
-    // 支持的链：ETH主网和Sepolia测试网
-    chains: [mainnet, sepolia],
+    // 支持的链：ETH主网、Sepolia测试网和Monad测试网
+    chains: [mainnet, sepolia, monadTestnet],
     transports: {
       // 各链的RPC URL
       [mainnet.id]: http(
@@ -17,6 +44,7 @@ const config = createConfig(
       [sepolia.id]: http(
         `https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_ID}`
       ),
+      [monadTestnet.id]: http('https://testnet-rpc.monad.xyz'),
     },
 
     // 必需的API密钥
