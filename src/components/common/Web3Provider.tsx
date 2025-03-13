@@ -8,10 +8,9 @@ import { ConnectKitProvider, getDefaultConfig } from 'connectkit';
 const monadTestnet: Chain = {
   id: 10143,
   name: 'Monad Testnet',
-  network: 'monad-testnet',
   nativeCurrency: {
     name: 'Monad',
-    symbol: 'MONAD',
+    symbol: 'MON',
     decimals: 18,
   },
   rpcUrls: {
