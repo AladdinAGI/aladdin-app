@@ -24,15 +24,15 @@ const createNavLinks = (t: Dictionary): NavLink[] => [
     label: t.nav.home,
   },
   {
+    href: '/staking',
+    pathMatch: '/staking',
+    label: t.nav.staking,
+  },
+  {
     href: '/marketplace',
     pathMatch: '/marketplace',
     label: t.nav.marketplace,
     comingSoon: true,
-  },
-  {
-    href: '/staking',
-    pathMatch: '/staking',
-    label: t.nav.staking,
   },
   {
     href: '/professional',
@@ -50,34 +50,9 @@ export default function Header({ lang }: HeaderProps) {
   const [dictionary, setDictionary] = useState<Dictionary | null>(null);
   const [navLinks, setNavLinks] = useState<NavLink[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-
-  // useEffect(() => {
-  //   const originalConsoleError = console.error;
-  //   console.error = (...args) => {
-  //     console.log('Intercepted console.error args:🐻', args);
-  //     const errorMessage = args[0];
-
-  //     if (typeof errorMessage === 'string') {
-  //       // 匹配带 %s 的模板字符串
-  //       if (
-  //         errorMessage.includes(
-  //           'An empty string ("") was passed to the %s attribute'
-  //         )
-  //       ) {
-  //         return; // 屏蔽这个错误
-  //       }
-  //     }
-  //     // 其他错误正常输出
-  //     originalConsoleError.apply(console, args);
-  //   };
-
-  //   // 清理函数
-  //   return () => {
-  //     console.error = originalConsoleError;
-  //   };
-  // }, []);
 
   useEffect(() => {
     const loadDictionary = async () => {
@@ -87,6 +62,16 @@ export default function Header({ lang }: HeaderProps) {
     };
     loadDictionary();
   }, [lang]);
+
+  // 检测滚动以改变Header样式
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // 当路由变化时关闭移动菜单
   useEffect(() => {
@@ -118,7 +103,15 @@ export default function Header({ lang }: HeaderProps) {
 
   return (
     <>
-      <header className="h-14 sm:h-16 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.1)] relative z-30">
+      {/* 添加毛玻璃效果和过渡效果 */}
+      <header
+        className={`sticky top-0 h-14 sm:h-16 z-50 transition-all duration-300
+          ${
+            isScrolled
+              ? 'bg-white/80 backdrop-blur-md shadow-md'
+              : 'bg-white shadow-[0_1px_4px_rgba(0,0,0,0.1)]'
+          }`}
+      >
         <div className="h-full mx-auto px-3 sm:px-6 flex justify-between items-center">
           <div className="flex items-center">
             <h1 className="m-0">
@@ -146,10 +139,10 @@ export default function Header({ lang }: HeaderProps) {
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleNavClick(link, e)}
-                  className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded text-sm lg:text-base whitespace-nowrap transition-colors ${
+                  className={`px-3 lg:px-4 py-1.5 lg:py-2 text-sm lg:text-base whitespace-nowrap relative transition-all duration-300 border-b-2 ${
                     isActivePath(link.pathMatch)
-                      ? 'bg-[#1890ff] text-white'
-                      : 'text-[#333] hover:bg-gray-50'
+                      ? 'text-[#1890ff] border-[#1890ff]'
+                      : 'text-[#333] hover:text-[#1890ff] border-transparent hover:border-[#1890ff]/30'
                   }`}
                 >
                   {link.label}
@@ -244,9 +237,9 @@ export default function Header({ lang }: HeaderProps) {
           onClick={() => setMobileMenuOpen(false)}
         />
 
-        {/* 移动导航抽屉 */}
+        {/* 移动导航抽屉 - 也添加毛玻璃效果 */}
         <div
-          className={`fixed top-0 right-0 w-64 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden overflow-y-auto ${
+          className={`fixed top-0 right-0 w-64 h-full bg-white/90 backdrop-blur-md shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden overflow-y-auto ${
             mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
@@ -269,10 +262,10 @@ export default function Header({ lang }: HeaderProps) {
                 key={link.href}
                 href={link.href}
                 onClick={(e) => handleNavClick(link, e)}
-                className={`px-4 py-2.5 rounded text-sm transition-colors ${
+                className={`px-4 py-2.5 text-sm border-l-2 transition-all duration-300 ${
                   isActivePath(link.pathMatch)
-                    ? 'bg-[#1890ff] text-white'
-                    : 'text-[#333] hover:bg-gray-50'
+                    ? 'text-[#1890ff] border-[#1890ff]'
+                    : 'text-[#333] hover:text-[#1890ff] border-transparent hover:border-[#1890ff]/30'
                 }`}
               >
                 {link.label}
@@ -284,7 +277,7 @@ export default function Header({ lang }: HeaderProps) {
 
       {/* Coming Soon 提示 */}
       {showComingSoon && (
-        <div className="fixed top-16 sm:top-20 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-lg flex items-center gap-2 sm:gap-3 z-50 text-sm sm:text-base max-w-[90%] sm:max-w-md">
+        <div className="fixed top-16 sm:top-20 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-sm text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-lg flex items-center gap-2 sm:gap-3 z-40 text-sm sm:text-base max-w-[90%] sm:max-w-md">
           <span>{dictionary.alert.coming_soon}</span>
           <button
             onClick={() => setShowComingSoon(false)}
