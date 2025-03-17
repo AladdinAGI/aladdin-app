@@ -25,9 +25,7 @@ export default function HistoryPanel() {
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b border-[#f0f0f0]">
-        <h2 className="text-base font-medium text-[#333] m-0">
-          History 历史问题
-        </h2>
+        <h2 className="text-base font-medium text-[#333] m-0">History</h2>
       </div>
       <div className="flex-1 overflow-y-auto p-3">
         {history.map((item, index) => (
