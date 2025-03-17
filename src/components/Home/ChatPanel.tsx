@@ -93,7 +93,7 @@ export default function MainChat() {
     try {
       // Initialize the Mastra client according to the documentation
       const client = new MastraClient({
-        baseUrl: 'http://localhost:4111', // Replace with your actual API base URL
+        baseUrl: 'https://api.aladdin.build', // Replace with your actual API base URL
         retries: 3,
         // headers: {
         //   // Include any necessary authentication headers
