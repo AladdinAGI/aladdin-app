@@ -39,11 +39,11 @@ export const toolsInfo = [
     name: { en: '🏦 Stablecoin Staking', zh: '🏦 稳定币质押' },
     examples: {
       en: [
-        'Best USDC staking pools',
-        'Best USDT staking APY',
-        'Top DAI yields',
+        'I have 10,000 USDT and want to achieve a 5% return target by taking a certain degree of risk. My risk tolerance is 15%.',
       ],
-      zh: ['最佳USDC质押池', '最佳USDT质押年化', '最高DAI收益'],
+      zh: [
+        '我有 10,000 USDT，希望在承担一定风险的情况下实现 5% 的收益目标。我的风险承受能力为 15%。',
+      ],
     },
   },
 ];

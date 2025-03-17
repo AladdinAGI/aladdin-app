@@ -45,8 +45,9 @@ export default function MainChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       type: 'ai',
-      content:
-        "👋 Hello! I'm Aladdin AI Assistant, I can help you with cryptocurrency management and hiring AI agents. Try saying 'hire agent' to get started or '/stake' to stake your tokens!",
+      content: `👋 Hello! I'm Aladdin AI Assistant, I can help you with cryptocurrency management and hiring AI agents. 
+        
+      Try saying '/stake amount[10000] APY[5] riskTolerance[15]' to stake your tokens!`,
       showTips: true,
     },
   ]);

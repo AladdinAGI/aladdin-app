@@ -5,7 +5,6 @@ import { Theme } from '@radix-ui/themes';
 import Header from '@/components/common/Header';
 import { Locale } from '@/app/i18n/config';
 import { Web3Provider } from '@/components/common/Web3Provider';
-
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
