@@ -658,15 +658,10 @@ export default function MainChat() {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-5 bg-[#f5f5f5]"
-        style={{
-          height: 'calc(100vh - 80px)',
-          maxHeight: 'calc(100vh - 80px)',
-          overflowY: 'auto',
-        }}
+        className="absolute inset-x-0 top-0 bottom-16 overflow-y-auto p-5 bg-[#f5f5f5]"
       >
         {messages.map((message, index) => (
           <div key={index}>
@@ -726,7 +721,7 @@ export default function MainChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 border-t border-[#e1e1e1] bg-white">
+      <div className="absolute inset-x-0 bottom-0 p-4 border-t border-[#e1e1e1] bg-white">
         <div className="flex gap-3">
           <input
             type="text"
