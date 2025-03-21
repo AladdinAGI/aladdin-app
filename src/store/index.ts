@@ -20,4 +20,5 @@ export interface StakingCommandResponse {
 }
 // Create jotai atoms for state management
 export const stakingDataAtom = atom<StakingCommandResponse | null>(null);
-export const showStakingModalAtom = atom<boolean>(false);
+
+export const stakingStateAtom = atom<boolean>(false);

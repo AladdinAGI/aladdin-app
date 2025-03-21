@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { ECharts } from 'echarts';
+import * as echarts from 'echarts';
 
 interface HistoryItem {
   time: string;
@@ -22,12 +24,110 @@ export default function HistoryPanel() {
     },
   ]);
 
+  const chartRef = useRef<HTMLDivElement>(null);
+  const chartInstance = useRef<ECharts | undefined>(undefined);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    // 如果已经存在图表实例，先销毁它
+    if (chartInstance.current) {
+      chartInstance.current.dispose();
+    }
+
+    const chart = echarts.init(chartRef.current);
+    chartInstance.current = chart;
+
+    const option = {
+      series: [
+        {
+          type: 'gauge',
+          startAngle: 180,
+          endAngle: 0,
+          min: 0,
+          max: 100,
+          splitNumber: 4,
+          axisLine: {
+            lineStyle: {
+              width: 6,
+              color: [
+                [0.25, '#f5222d'],
+                [0.5, '#faad14'],
+                [0.75, '#52c41a'],
+                [1, '#1890ff'],
+              ],
+            },
+          },
+          pointer: {
+            icon: 'path://M12.8,0.7l12,40.1H0.7L12.8,0.7z',
+            length: '12%',
+            width: 4,
+            offsetCenter: [0, '-60%'],
+            itemStyle: {
+              color: 'auto',
+            },
+          },
+          axisTick: {
+            length: 12,
+            lineStyle: {
+              color: 'auto',
+              width: 1,
+            },
+          },
+          splitLine: {
+            length: 20,
+            lineStyle: {
+              color: 'auto',
+              width: 2,
+            },
+          },
+          axisLabel: {
+            color: '#666',
+            fontSize: 10,
+            distance: -60,
+          },
+          title: {
+            offsetCenter: [0, '-20%'],
+            fontSize: 12,
+          },
+          detail: {
+            fontSize: 14,
+            offsetCenter: [0, '0%'],
+            valueAnimation: true,
+            color: 'auto',
+          },
+          data: [
+            {
+              value: 95,
+              name: '',
+            },
+          ],
+        },
+      ],
+    };
+
+    chart.setOption(option);
+
+    // 添加窗口大小变化的监听器
+    const handleResize = () => {
+      chart.resize();
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.dispose();
+    };
+  }, []);
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b border-[#f0f0f0]">
         <h2 className="text-base font-medium text-[#333] m-0">History</h2>
       </div>
-      <div className="flex-1 overflow-y-auto p-3">
+
+      {/* History items */}
+      <div className="overflow-y-auto p-3 flex-1">
         {history.map((item, index) => (
           <div
             key={index}
@@ -50,6 +150,14 @@ export default function HistoryPanel() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Platform Health section - moved from ContractPanel */}
+      <div className="p-4 border-t border-[#f0f0f0]">
+        <h2 className="text-base font-medium text-gray-900 mb-4">
+          Platform Health
+        </h2>
+        <div ref={chartRef} className="h-40" />
       </div>
     </div>
   );
