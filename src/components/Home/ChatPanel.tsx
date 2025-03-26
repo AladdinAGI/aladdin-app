@@ -6,7 +6,7 @@ import { QuickQuestions } from './QuickQuestions';
 import { MastraClient } from '@mastra/client-js';
 import ReactMarkdown from 'react-markdown';
 import { useAtom } from 'jotai';
-import { stakingStateAtom } from '@/store';
+import { stakingParamsAtom, stakingStateAtom } from '@/store';
 import AlertDialogComponent, { AlertDialogProps } from '../ui/AlertDialog';
 
 // 消息接口
@@ -28,7 +28,7 @@ export default function MainChat() {
       showTips: true,
     },
   ]);
-
+  const [, setStakingParams] = useAtom(stakingParamsAtom);
   // Alert dialog state
   const [alertOpen, setAlertOpen] = useState<boolean>(false);
   const [alertProps, setAlertProps] = useState<
@@ -117,6 +117,7 @@ export default function MainChat() {
         showCancel: false,
       });
       setAlertOpen(true);
+      console.log('🐻🐻🐻🐻🐻🐻', amount, apy, riskTolerance);
 
       return {
         amount,
@@ -125,7 +126,11 @@ export default function MainChat() {
         success: false,
       };
     }
-
+    setStakingParams((draft) => {
+      draft.amount = amount;
+      draft.apy = apy;
+      draft.riskTolerance = riskTolerance;
+    });
     return {
       amount,
       apy,

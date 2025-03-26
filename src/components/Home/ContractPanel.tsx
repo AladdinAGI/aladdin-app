@@ -3,6 +3,8 @@
 import { useState } from 'react';
 // 导入MergedAgentHiring组件
 import MergedAgentHiring from '@/components/staking/MergedAgentHiring';
+import { useAtom } from 'jotai';
+import { stakingParamsAtom } from '@/store';
 
 export default function ContractPanel() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -11,9 +13,10 @@ export default function ContractPanel() {
   const [depositComplete, setDepositComplete] = useState(false);
   const [showAgentHiring, setShowAgentHiring] = useState(false);
 
+  const [stakingParams] = useAtom(stakingParamsAtom);
   const contractAddress = '0x90E51BD7e0F5347b07D0e383e739cE5da292d725';
   const aavePoolAddress = '0x87870BCa3F3FD6335C3F4ce8392d69350B4F4e2b';
-  const agentAddress = '0x330136160d2008AbF5c24d0aFda688A1B5C11c53'; // 模拟代理地址
+  const agentAddress = '0x330136160d2008AbF5c24d0aFda688A1B5C11c53';
 
   // 处理Deposit Funds点击
   const handleDepositClick = () => {
@@ -73,14 +76,13 @@ export default function ContractPanel() {
           </div>
         </div>
         <div className="flex justify-between mt-2">
-          {/* 点击"Deposit Funds"文本可以直接跳到Agent雇佣流程 - 扩大点击区域 */}
-          <div
-            className="text-xs font-medium text-gray-600 cursor-pointer hover:text-blue-600 px-4 py-2 -mx-4 -my-2"
+          <button
+            className="text-xs font-medium text-gray-600 cursor-pointer hover:text-blue-600 px-4 py-2 bg-transparent border-none focus:outline-none"
             onClick={handleDepositClick}
           >
             Deposit Funds
-          </div>
-          <div className="text-xs font-medium text-gray-600 px-4 py-2 -mx-4 -my-2">
+          </button>
+          <div className="text-xs font-medium text-gray-600 px-4 py-2">
             Sign Contract
           </div>
         </div>
@@ -125,11 +127,13 @@ export default function ContractPanel() {
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-sm text-gray-500">Amount:</div>
                 <div className="text-sm text-gray-900 font-medium">
-                  10,000 USDT
+                  {stakingParams.amount} USDT
                 </div>
 
                 <div className="text-sm text-gray-500">Expected APY:</div>
-                <div className="text-sm text-gray-900 font-medium">5.00%</div>
+                <div className="text-sm text-gray-900 font-medium">
+                  {stakingParams.apy}%
+                </div>
 
                 <div className="text-sm text-gray-500">Duration:</div>
                 <div className="text-sm text-gray-900 font-medium">
@@ -148,7 +152,7 @@ export default function ContractPanel() {
               }`}
             >
               {isDepositing ? (
-                <span className="flex items-center justify-center">
+                <div className="flex items-center justify-center w-full">
                   <svg
                     className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                     xmlns="http://www.w3.org/2000/svg"
@@ -170,7 +174,7 @@ export default function ContractPanel() {
                     ></path>
                   </svg>
                   Depositing...
-                </span>
+                </div>
               ) : (
                 'Deposit Funds'
               )}
@@ -266,7 +270,7 @@ export default function ContractPanel() {
               }`}
             >
               {isSigning ? (
-                <span className="flex items-center justify-center">
+                <div className="flex items-center justify-center w-full">
                   <svg
                     className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                     xmlns="http://www.w3.org/2000/svg"
@@ -288,7 +292,7 @@ export default function ContractPanel() {
                     ></path>
                   </svg>
                   Signing Contract...
-                </span>
+                </div>
               ) : (
                 'Sign Contract'
               )}
@@ -303,7 +307,7 @@ export default function ContractPanel() {
       <div className="fixed top-1/3 right-1/4 w-16 h-16 rounded-full bg-pink-500/20 blur-xl animate-pulse"></div>
 
       <div
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full border border-white/5 animate-ping opacity-20"
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full border border-white/5 animate-ping opacity-20 -z-50"
         style={{ animationDelay: '0.5s' }}
       ></div>
     </div>

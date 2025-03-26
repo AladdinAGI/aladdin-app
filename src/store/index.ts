@@ -1,24 +1,22 @@
 import { atom } from 'jotai';
-
-interface StakingOption {
-  platform: string;
-  apy: number;
-  tvl?: number;
-  minAmount?: number;
-  lockPeriod?: string;
-  tags: string[];
-  risks: string[];
-}
-
-export interface StakingCommandResponse {
-  type: string; // "standard" or "professional" or "error"
-  amount: number; // User's staking amount
-  targetAPY: number; // User's requested APY
-  riskTolerance: number; // User's acceptable risk percentage
-  options?: StakingOption[]; // Only for standard staking (APY ≤ 10%)
-  message: string; // Response message to display
-}
-// Create jotai atoms for state management
-export const stakingDataAtom = atom<StakingCommandResponse | null>(null);
+import { atomWithImmer } from 'jotai-immer';
 
 export const stakingStateAtom = atom<boolean>(false);
+
+// 定义状态接口
+interface StakingParams {
+  amount: string;
+  apy: string;
+  riskTolerance: string;
+}
+
+// 初始状态，所有数值默认为"0"
+const initialStakingState: StakingParams = {
+  amount: '0',
+  apy: '0',
+  riskTolerance: '0',
+};
+
+// 使用 immer 创建 atom
+export const stakingParamsAtom =
+  atomWithImmer<StakingParams>(initialStakingState);
