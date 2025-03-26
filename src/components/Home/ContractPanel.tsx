@@ -5,6 +5,11 @@ import { useState } from 'react';
 import MergedAgentHiring from '@/components/staking/MergedAgentHiring';
 import { useAtom } from 'jotai';
 import { stakingParamsAtom } from '@/store';
+import {
+  aavePoolAddress,
+  agentAddress,
+  contractAddress,
+} from '@/constants/contractInfo';
 
 export default function ContractPanel() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -14,9 +19,6 @@ export default function ContractPanel() {
   const [showAgentHiring, setShowAgentHiring] = useState(false);
 
   const [stakingParams] = useAtom(stakingParamsAtom);
-  const contractAddress = '0x90E51BD7e0F5347b07D0e383e739cE5da292d725';
-  const aavePoolAddress = '0x87870BCa3F3FD6335C3F4ce8392d69350B4F4e2b';
-  const agentAddress = '0x330136160d2008AbF5c24d0aFda688A1B5C11c53';
 
   // 处理Deposit Funds点击
   const handleDepositClick = () => {
