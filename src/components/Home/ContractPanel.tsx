@@ -182,8 +182,8 @@ export default function ContractPanel() {
               Step 2: Sign Staking Contract
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Now that you've deposited funds, sign our smart contract to begin
-              staking with your selected parameters.
+              Now that you&apos;ve deposited funds, sign our smart contract to
+              begin staking with your selected parameters.
             </p>
 
             <div className="bg-gray-50 p-3 rounded-md mb-4 border border-gray-100">

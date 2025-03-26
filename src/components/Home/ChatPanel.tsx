@@ -7,6 +7,7 @@ import { MastraClient } from '@mastra/client-js';
 import ReactMarkdown from 'react-markdown';
 import { useAtom } from 'jotai';
 import { stakingStateAtom } from '@/store';
+import AlertDialogComponent, { AlertDialogProps } from '../ui/AlertDialog';
 
 // 消息接口
 interface Message {
@@ -27,10 +28,22 @@ export default function MainChat() {
       showTips: true,
     },
   ]);
+
+  // Alert dialog state
+  const [alertOpen, setAlertOpen] = useState<boolean>(false);
+  const [alertProps, setAlertProps] = useState<
+    Omit<AlertDialogProps, 'isOpen' | 'onClose'>
+  >({
+    title: '',
+    message: '',
+    type: 'info',
+    confirmText: 'OK',
+    showCancel: false,
+  });
+
   const [input, setInput] = useState('');
   const [currentLang] = useState<'en' | 'zh'>('en');
   const [isLoading, setIsLoading] = useState(false);
-
   // 使用 jotai 状态管理器
   const [, setStakingState] = useAtom(stakingStateAtom);
 
@@ -78,27 +91,66 @@ export default function MainChat() {
     );
   };
 
-  // 解析质押命令中的参数
   const parseStakingCommand = (message: string) => {
-    const amount = message.match(/amount\[(\d+)\]/)?.[1] || '10000';
-    const apy = message.match(/apy\[(\d+(?:\.\d+)?)\]/)?.[1] || '5';
-    const riskTolerance =
-      message.match(/risktolerance\[(\d+(?:\.\d+)?)\]/)?.[1] || '15';
+    const amount = message.match(/amount\s*\[(\d+)\]/i)?.[1];
+    const apy = message.match(/APY\s*\[(\d+(?:\.\d+)?)\]/i)?.[1];
+    const riskTolerance = message.match(
+      /riskTolerance\s*\[(\d+(?:\.\d+)?)\]/i
+    )?.[1];
 
-    return { amount, apy, riskTolerance };
+    if (!amount || !apy || !riskTolerance) {
+      let errorMsg = 'Failed to parse command: ';
+      const errorParams = [];
+
+      if (!amount) errorParams.push('amount');
+      if (!apy) errorParams.push('APY');
+      if (!riskTolerance) errorParams.push('riskTolerance');
+
+      errorMsg += errorParams.join(', ') + ' parameter(s) not found';
+
+      // Show error dialog using component state
+      setAlertProps({
+        title: 'Error',
+        message: errorMsg,
+        type: 'error',
+        confirmText: 'OK',
+        showCancel: false,
+      });
+      setAlertOpen(true);
+
+      return {
+        amount,
+        apy,
+        riskTolerance,
+        success: false,
+      };
+    }
+
+    return {
+      amount,
+      apy,
+      riskTolerance,
+      success: true,
+    };
   };
 
   // 处理质押命令
   const handleStakingCommand = (message: string) => {
     const params = parseStakingCommand(message);
+    if (params.success) {
+      console.log('🐻--->: ', params);
+      // 更新 jotai 状态
+      setStakingState(true);
 
-    // 更新 jotai 状态
-    setStakingState(true);
-
-    // 添加回复消息
-    addAIMessage(
-      `I've prepared a staking proposal for you. You can stake ${params.amount} USDT with an expected APY of ${params.apy}%. Please visit the Staking tab to complete the process.`
-    );
+      // 添加回复消息
+      addAIMessage(
+        `I've prepared a staking proposal for you. You can stake ${params.amount} USDT with an expected APY of ${params.apy}%. Please visit the Staking tab to complete the process.`
+      );
+    } else {
+      addAIMessage(
+        'Sorry, I could not process your request. Please try again.'
+      );
+    }
   };
 
   // 添加AI消息的辅助函数
@@ -176,38 +228,8 @@ export default function MainChat() {
       try {
         const data = JSON.parse(response.text);
         if (data.type === 'stake' || data.type === 'staking') {
+          //本地消息拦截
           console.log('Received staking data:', data);
-
-          // 设置质押默认值
-          const amount = data.amount || '1000';
-          const apy = data.apy || '10';
-          const potentialLoss = data.potentialLoss || '15';
-
-          // 首先更新消息
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === loadingId
-                ? {
-                    type: 'ai',
-                    content:
-                      data.message ||
-                      `I've prepared a staking proposal for you. You can stake ${amount} tokens with an expected APY of ${apy}%. Please visit the Staking tab to complete the process.`,
-                    id: response.id,
-                    isLoading: false,
-                  }
-                : msg
-            )
-          );
-
-          // 更新质押状态
-          setStakingState({
-            isActive: true,
-            step: 'deposit',
-            amount: amount,
-            apy: apy,
-            riskTolerance: potentialLoss,
-            txHash: null,
-          });
         } else {
           // 常规消息响应
           setMessages((prev) =>
@@ -265,7 +287,9 @@ export default function MainChat() {
 
   const handleQuestionSelect = (question: string) => {
     setInput(question);
-    handleSend();
+    setTimeout(() => {
+      handleSend();
+    }, 10);
   };
 
   // 渲染消息内容函数
@@ -290,102 +314,113 @@ export default function MainChat() {
   };
 
   return (
-    <div className="h-full flex flex-col relative">
-      <div
-        ref={chatContainerRef}
-        className="absolute inset-x-0 top-0 bottom-16 overflow-y-auto p-5 bg-[#f5f5f5]"
-      >
-        {messages.map((message, index) => (
-          <div key={index}>
-            <div
-              className={`flex items-start mb-5 ${
-                message.type === 'user' ? 'flex-row-reverse' : ''
-              }`}
-            >
+    <>
+      {' '}
+      <div className="h-full flex flex-col relative">
+        <div
+          ref={chatContainerRef}
+          className="absolute inset-x-0 top-0 bottom-16 overflow-y-auto p-5 bg-[#f5f5f5]"
+          style={{ willChange: 'transform' }}
+        >
+          {messages.map((message, index) => (
+            <div key={index}>
               <div
-                className={`
-                w-10 h-10 rounded flex-shrink-0
-                ${message.type === 'user' ? 'bg-[#95ec69]' : 'bg-[#1890ff]'}
-                flex items-center justify-center text-white text-sm
-              `}
-              >
-                {message.type === 'user' ? '👨🏻' : 'AI'}
-              </div>
-              <div
-                className={`
-                relative max-w-[70%] px-4 py-3 mx-3
-                ${
-                  message.type === 'user'
-                    ? 'bg-[#95ec69] rounded-[12px]'
-                    : 'bg-white rounded-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.1)]'
-                }
-              `}
+                className={`flex items-start mb-5 ${
+                  message.type === 'user' ? 'flex-row-reverse' : ''
+                }`}
               >
                 <div
                   className={`
-                  absolute top-[13px] w-0 h-0
-                  ${
-                    message.type === 'user'
-                      ? 'right-[-8px] border-l-[8px] border-l-[#95ec69] border-y-[5px] border-y-transparent'
-                      : 'left-[-8px] border-r-[8px] border-r-white border-y-[5px] border-y-transparent'
-                  }
-                `}
-                ></div>
-                <div
-                  className={`text-[14px] leading-[1.5] ${
-                    message.type === 'user' ? 'text-black' : 'text-[#333]'
-                  }`}
+              w-10 h-10 rounded flex-shrink-0
+              ${message.type === 'user' ? 'bg-[#95ec69]' : 'bg-[#1890ff]'}
+              flex items-center justify-center text-white text-sm
+            `}
                 >
-                  {renderMessageContent(message)}
+                  {message.type === 'user' ? '👨🏻' : 'AI'}
+                </div>
+                <div
+                  className={`
+              relative max-w-[70%] px-4 py-3 mx-3
+              ${
+                message.type === 'user'
+                  ? 'bg-[#95ec69] rounded-[12px]'
+                  : 'bg-white rounded-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.1)]'
+              }
+            `}
+                >
+                  <div
+                    className={`
+                absolute top-[13px] w-0 h-0
+                ${
+                  message.type === 'user'
+                    ? 'right-[-8px] border-l-[8px] border-l-[#95ec69] border-y-[5px] border-y-transparent'
+                    : 'left-[-8px] border-r-[8px] border-r-white border-y-[5px] border-y-transparent'
+                }
+              `}
+                  ></div>
+                  <div
+                    className={`text-[14px] leading-[1.5] ${
+                      message.type === 'user' ? 'text-black' : 'text-[#333]'
+                    }`}
+                  >
+                    {renderMessageContent(message)}
+                  </div>
                 </div>
               </div>
+              {message.showTips && (
+                <div className="mt-4 mb-5">
+                  <QuickQuestions
+                    currentLang={currentLang}
+                    onSelect={handleQuestionSelect}
+                  />
+                </div>
+              )}
             </div>
-            {message.showTips && (
-              <div className="mt-4 mb-5">
-                <QuickQuestions
-                  currentLang={currentLang}
-                  onSelect={handleQuestionSelect}
-                />
-              </div>
-            )}
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
 
-      <div className="absolute inset-x-0 bottom-0 p-4 border-t border-[#e1e1e1] bg-white">
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              currentLang === 'en' ? 'Type your question...' : '输入您的问题...'
-            }
-            className="flex-1 px-4 py-2 rounded-full border border-[#e1e1e1] focus:outline-none focus:border-[#1890ff] focus:ring-2 focus:ring-[#1890ff]/10 text-sm"
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            disabled={isLoading}
-          />
-          <button
-            onClick={handleSend}
-            className={`px-5 py-2 rounded-full ${
-              isLoading ? 'bg-[#ccc]' : 'bg-[#1890ff] hover:bg-[#40a9ff]'
-            } text-white transition-colors flex items-center gap-2 text-sm`}
-            disabled={isLoading}
-          >
-            <span>
-              {isLoading
-                ? currentLang === 'en'
-                  ? 'Sending...'
-                  : '发送中...'
-                : currentLang === 'en'
-                ? 'Send'
-                : '发送'}
-            </span>
-            {!isLoading && <ArrowRightIcon className="w-4 h-4" />}
-          </button>
+        <div className="absolute inset-x-0 bottom-0 p-4 border-t border-[#e1e1e1] bg-white">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={
+                currentLang === 'en'
+                  ? 'Type your question...'
+                  : '输入您的问题...'
+              }
+              className="flex-1 px-4 py-2 rounded-full border border-[#e1e1e1] focus:outline-none focus:border-[#1890ff] focus:ring-2 focus:ring-[#1890ff]/10 text-sm"
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              disabled={isLoading}
+            />
+            <button
+              onClick={handleSend}
+              className={`px-5 py-2 rounded-full ${
+                isLoading ? 'bg-[#ccc]' : 'bg-[#1890ff] hover:bg-[#40a9ff]'
+              } text-white transition-colors flex items-center gap-2 text-sm`}
+              disabled={isLoading}
+            >
+              <span>
+                {isLoading
+                  ? currentLang === 'en'
+                    ? 'Sending...'
+                    : '发送中...'
+                  : currentLang === 'en'
+                  ? 'Send'
+                  : '发送'}
+              </span>
+              {!isLoading && <ArrowRightIcon className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+      <AlertDialogComponent
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        {...alertProps}
+      />
+    </>
   );
 }

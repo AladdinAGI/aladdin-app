@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import ChatPanel from '@/components/Home/ChatPanel';
 import ContractPanel from '@/components/Home/ContractPanel';
 import HistoryPanel from '@/components/Home/HistoryPanel';
@@ -10,25 +10,34 @@ import { useAtom } from 'jotai';
 
 export default function Home() {
   const [showContract] = useAtom(stakingStateAtom);
-  const [isContractVisible, setIsContractVisible] = useState(false);
+  const [isContractMounted, setIsContractMounted] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // Handle the animation timing
+  // 更高效的处理方式，避免使用timeout
   useEffect(() => {
-    let animationTimeout;
     if (showContract) {
-      setIsContractVisible(true);
-    } else {
-      // Set a timeout to allow the exit animation to complete
-      animationTimeout = setTimeout(() => {
-        setIsContractVisible(false);
-      }, 500); // Match the duration in the CSS
-    }
+      // 当需要显示合约面板时，立即挂载组件
+      setIsContractMounted(true);
+    } else if (!showContract && isContractMounted) {
+      // 监听过渡动画结束，再卸载组件
+      const handleTransitionEnd = () => {
+        setIsContractMounted(false);
+      };
 
-    // Cleanup timeout on unmount
-    return () => {
-      if (animationTimeout) clearTimeout(animationTimeout);
-    };
-  }, [showContract]);
+      const currentPanelRef = panelRef.current;
+      if (currentPanelRef) {
+        currentPanelRef.addEventListener('transitionend', handleTransitionEnd, {
+          once: true,
+        });
+        return () => {
+          currentPanelRef.removeEventListener(
+            'transitionend',
+            handleTransitionEnd
+          );
+        };
+      }
+    }
+  }, [showContract, isContractMounted]);
 
   return (
     <main className="px-4 py-3">
@@ -39,28 +48,33 @@ export default function Home() {
         </div>
 
         <div className="order-1 md:order-2">
+          {/* 使用CSS Grid布局而非条件类名改变，确保平滑过渡 */}
           <div
-            className={`grid grid-cols-1 ${
-              showContract ? 'lg:grid-cols-2' : 'lg:grid-cols-1'
-            } gap-6`}
+            className="grid gap-6"
+            style={{
+              gridTemplateColumns: showContract ? '1fr 1fr' : '1fr',
+              transition:
+                'grid-template-columns 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
           >
-            {/* Chat panel - always visible */}
-            <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] h-[calc(100vh-88px)]">
+            {/* Chat panel - 使用固定定位和宽度，防止变化时闪动 */}
+            <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] h-[calc(100vh-88px)] overflow-hidden will-change-transform">
               <ChatPanel />
             </div>
 
-            {/* Contract panel - conditionally visible with animation */}
-            {(showContract || isContractVisible) && (
+            {/* Contract panel - 只有在需要时才渲染，并使用CSS过渡效果 */}
+            {(showContract || isContractMounted) && (
               <div
+                ref={panelRef}
                 className={`
                   bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] 
-                  transform transition-all duration-500 ease-in-out
+                  transform transition-all duration-500 ease-in-out will-change-transform
+                  h-[calc(100vh-88px)] overflow-hidden
                   ${
-                    isContractVisible
-                      ? 'opacity-100 scale-100'
-                      : 'opacity-0 scale-95 lg:pointer-events-none'
-                  } 
-                  h-[calc(100vh-88px)]
+                    showContract
+                      ? 'opacity-100 translate-x-0'
+                      : 'opacity-0 translate-x-10 pointer-events-none'
+                  }
                 `}
               >
                 <ContractPanel />

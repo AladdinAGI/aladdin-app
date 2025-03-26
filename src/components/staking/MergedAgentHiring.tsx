@@ -243,6 +243,7 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
   const switchToSepolia = async () => {
     try {
       if (window.ethereum) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window.ethereum as any).request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: '0xaa36a7' }], // Sepolia chainId in hex
