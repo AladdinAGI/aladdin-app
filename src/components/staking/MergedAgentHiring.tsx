@@ -1,5 +1,5 @@
 // MergedAgentHiring.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowRightIcon,
   ExclamationTriangleIcon,
@@ -16,12 +16,14 @@ import {
 } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { parseUnits, formatUnits } from 'viem';
+
 import {
   CONTRACT_ABI,
   CONTRACT_ADDRESS,
   USDT_ABI,
   USDT_ADDRESS,
 } from './AgentHiringTypes';
+import AlertDialogComponent from '../ui/AlertDialog';
 
 interface MergedAgentHiringProps {
   agentAddress?: string;
@@ -39,13 +41,11 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
   agentAddress,
   onComplete,
 }) => {
-  // Wagmi hooks
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
 
-  // State management
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processComplete, setProcessComplete] = useState<boolean>(false);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -55,15 +55,25 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
   const [usdtBalance, setUsdtBalance] = useState<string>('0');
   const [agentMetadata, setAgentMetadata] = useState<AgentMetadata>({
     agentType: '',
-    amount: '0',
+    amount: '1', // 固定每天1 USDT
     duration: '30',
-    totalCost: '0',
+    totalCost: '30', // 默认30天
   });
 
-  // Check if on correct network
+  const [alertDialog, setAlertDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'info' | 'error' | 'warning' | 'success',
+    confirmText: 'OK',
+    cancelText: 'Cancel',
+    onConfirm: () => {},
+    onCancel: () => {},
+    showCancel: false,
+  });
+
   const isOnSepolia = chainId === 11155111;
 
-  // Read agent info
   const {
     data: agentData,
     isLoading: isLoadingAgentData,
@@ -79,7 +89,6 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     },
   });
 
-  // Read USDT balance
   const { data: balanceData, refetch: refetchBalance } = useReadContract({
     address: USDT_ADDRESS,
     abi: USDT_ABI,
@@ -90,7 +99,6 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     },
   });
 
-  // Read USDT allowance
   const { data: allowanceData, refetch: refetchAllowance } = useReadContract({
     address: USDT_ADDRESS,
     abi: USDT_ABI,
@@ -101,18 +109,15 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     },
   });
 
-  // Approve USDT
   const {
     data: approveHash,
     isPending: isApproving,
     writeContract: approveUSDT,
   } = useWriteContract();
 
-  // Create hiring contract
   const { data: createEngagementHash, writeContract: createEngagement } =
     useWriteContract();
 
-  // Monitor transactions
   const { isLoading: isApproveLoading, isSuccess: isApproveSuccess } =
     useWaitForTransactionReceipt({
       hash: approveHash,
@@ -122,11 +127,13 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     hash: createEngagementHash,
   });
 
-  // Process hiring after approval - declare here to avoid forward reference
-  const processHiringAfterApproval = () => {
+  const clearProcessingState = () => {
+    setIsProcessing(false);
+  };
+
+  const processHiringAfterApproval = useCallback(() => {
     try {
       if (!agentAddress || !address) return;
-
       createEngagement({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -138,31 +145,23 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
       setTxError((error as Error)?.message || 'Failed to create engagement');
       setIsProcessing(false);
     }
-  };
+  }, [agentAddress, address, agentMetadata.duration, createEngagement]);
 
-  // Update agent metadata when data is loaded
   useEffect(() => {
     if (agentData && !isAgentDataError) {
       try {
-        const [agentType, ratePerDay, isActive] = agentData as [
-          string,
-          bigint,
-          boolean
-        ];
-
+        const [agentType, , isActive] = agentData as [string, bigint, boolean];
         if (isActive) {
-          const rateAsString = (Number(ratePerDay) / 1000000).toString();
+          const dailyRate = 1; // 固定每天1 USDT
           const totalCost = (
-            Number(rateAsString) * Number(agentMetadata.duration)
-          ).toString();
-
+            dailyRate * Number(agentMetadata.duration)
+          ).toFixed(0);
           setAgentMetadata((prev) => ({
             ...prev,
             agentType,
-            amount: rateAsString,
+            amount: dailyRate.toString(),
             totalCost,
           }));
-
           setAgentDataError(null);
         } else {
           setAgentDataError(
@@ -180,14 +179,12 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     }
   }, [agentData, isAgentDataError, agentMetadata.duration]);
 
-  // Update USDT balance
   useEffect(() => {
     if (balanceData) {
       setUsdtBalance(formatUnits(balanceData as bigint, 6));
     }
   }, [balanceData]);
 
-  // Handle approval success
   useEffect(() => {
     if (isApproveSuccess) {
       console.log('USDT approval successful, checking updated allowance');
@@ -196,17 +193,12 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
         processHiringAfterApproval();
       }, 2000);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isApproveSuccess]);
+  }, [isApproveSuccess, processHiringAfterApproval, refetchAllowance]);
 
-  // Handle engagement creation success
   useEffect(() => {
     if (isCreateSuccess && createEngagementHash) {
       console.log('Engagement created successfully:', createEngagementHash);
-
-      // Generate a mock engagement ID (in real app, get from events)
       const mockEngagementId = `ENG-${Math.floor(Math.random() * 1000000)}`;
-
       setTxHash(createEngagementHash);
       setEngagementId(mockEngagementId);
       setIsProcessing(false);
@@ -214,7 +206,6 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     }
   }, [isCreateSuccess, createEngagementHash]);
 
-  // Handle wallet connection
   const handleConnectWallet = () => {
     if (isConnected) {
       disconnect();
@@ -225,13 +216,10 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     }
   };
 
-  // Handle duration change
   const handleDurationChange = (newDuration: string) => {
-    const duration = newDuration || '30'; // Default to 30 if empty
-    const totalCost = (
-      parseFloat(agentMetadata.amount) * parseInt(duration, 10)
-    ).toString();
-
+    const duration = newDuration || '30';
+    const dailyRate = 1; // 固定每天1 USDT
+    const totalCost = (dailyRate * parseInt(duration, 10)).toFixed(0);
     setAgentMetadata((prev) => ({
       ...prev,
       duration,
@@ -239,14 +227,13 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     }));
   };
 
-  // Switch network to Sepolia
   const switchToSepolia = async () => {
     try {
       if (window.ethereum) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window.ethereum as any).request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0xaa36a7' }], // Sepolia chainId in hex
+          params: [{ chainId: '0xaa36a7' }],
         });
       }
     } catch (error) {
@@ -254,14 +241,11 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     }
   };
 
-  // Check if user has enough USDT
   const hasEnoughUSDT =
     parseFloat(usdtBalance) >= parseFloat(agentMetadata.totalCost);
 
-  // Check if USDT is approved
   const isUsdtApproved = (): boolean => {
     if (!allowanceData || !agentMetadata.totalCost) return false;
-
     try {
       const totalCostWei = parseUnits(agentMetadata.totalCost, 6);
       return (allowanceData as bigint) >= totalCostWei;
@@ -271,16 +255,12 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     }
   };
 
-  // Approve USDT for spending
   const handleApproveUSDT = () => {
     setTxError(null);
     setIsProcessing(true);
-
     try {
       if (!address) return;
-
       const totalCostWei = parseUnits(agentMetadata.totalCost, 6);
-
       approveUSDT({
         address: USDT_ADDRESS,
         abi: USDT_ABI,
@@ -294,34 +274,39 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     }
   };
 
-  // Handle the entire hiring process
   const handleHireAgent = () => {
-    if (isProcessing) return; // Prevent duplicate clicks
-
+    if (isProcessing) return;
     setTxError(null);
     setIsProcessing(true);
-
-    // Check if USDT is already approved
-    if (isUsdtApproved()) {
-      processHiringAfterApproval();
-    } else {
-      handleApproveUSDT();
-    }
+    setAlertDialog({
+      isOpen: true,
+      title: 'Confirm Agent Hiring',
+      message: `Are you sure you want to hire this agent for ${agentMetadata.duration} days at a fixed rate of 1 USDT per day (total: ${agentMetadata.totalCost} USDT)?`,
+      type: 'info',
+      showCancel: true,
+      confirmText: 'Confirm',
+      cancelText: 'Cancel',
+      onConfirm: () => {
+        if (isUsdtApproved()) {
+          processHiringAfterApproval();
+        } else {
+          handleApproveUSDT();
+        }
+      },
+      onCancel: clearProcessingState,
+    });
   };
 
-  // Reset the process to start over
   const handleReset = () => {
     setProcessComplete(false);
     setTxHash(null);
     setEngagementId(null);
     setTxError(null);
-
     if (onComplete) {
       onComplete();
     }
   };
 
-  // If network is incorrect, show switch network UI
   if (isConnected && !isOnSepolia) {
     return (
       <div className="p-5 rounded-xl bg-red-50 border border-red-100">
@@ -342,7 +327,6 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     );
   }
 
-  // If wallet not connected, show connect wallet UI
   if (!isConnected) {
     return (
       <div className="p-5 rounded-xl bg-blue-50 border border-blue-100">
@@ -360,18 +344,15 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
     );
   }
 
-  // If process complete, show success UI
   if (processComplete) {
     return (
       <div className="p-6 text-center">
         <div className="w-16 h-16 mx-auto mb-4 bg-green-50 rounded-full flex items-center justify-center">
           <CheckIcon className="w-8 h-8 text-green-600" />
         </div>
-
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
           Hiring Created Successfully!
         </h3>
-
         <p className="text-gray-600 mb-4">
           You have successfully hired a{' '}
           <strong>{agentMetadata.agentType}</strong> agent for a period of{' '}
@@ -380,13 +361,11 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
           <strong>{agentMetadata.totalCost} USDT</strong> has been held in
           escrow by the contract.
         </p>
-
         {engagementId && (
           <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 font-mono text-sm text-blue-800 mb-5">
             Engagement ID: {engagementId}
           </div>
         )}
-
         {txHash && (
           <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-5">
             <div className="font-medium text-gray-700 mb-1">
@@ -412,20 +391,32 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
             </div>
           </div>
         )}
-
-        <button
-          onClick={handleReset}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-        >
-          Hire Another Agent
-        </button>
+        <div className="flex justify-center">
+          <button
+            onClick={handleReset}
+            className="bg-green-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Complete Process
+          </button>
+        </div>
       </div>
     );
   }
 
-  // Main agent hiring UI
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-[70vh] pr-1">
       <h3 className="font-bold text-lg text-slate-800">Agent Hiring Process</h3>
 
       <div className="p-5 rounded-xl bg-green-50 border border-green-100">
@@ -444,11 +435,18 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
         </button>
       </div>
 
+      <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+        <div className="font-medium mb-1">ℹ️ Fee Information:</div>
+        <p className="text-sm">
+          The agent fee is fixed at 1 USDT per day. For {agentMetadata.duration}{' '}
+          days, the total cost will be {agentMetadata.totalCost} USDT.
+        </p>
+      </div>
+
       <div className="p-5 rounded-xl bg-gray-50 border border-gray-100">
         <h3 className="font-medium text-lg text-gray-900 mb-4">
           Agent Details
         </h3>
-
         {isLoadingAgentData ? (
           <div className="flex items-center justify-center py-4">
             <svg
@@ -487,17 +485,14 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
           <div className="grid grid-cols-2 gap-y-3">
             <div className="text-gray-500">Agent Type:</div>
             <div className="font-medium">{agentMetadata.agentType}</div>
-
             <div className="text-gray-500">Agent Address:</div>
             <div className="font-medium text-blue-600 font-mono text-sm break-all">
               {agentAddress}
             </div>
-
             <div className="text-gray-500">Daily Rate:</div>
             <div className="font-medium text-blue-600">
               {agentMetadata.amount} USDT
             </div>
-
             <div className="text-gray-500">Hiring Duration:</div>
             <div className="font-medium">
               <input
@@ -509,7 +504,6 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
               />{' '}
               days
             </div>
-
             <div className="text-gray-500">Total Cost:</div>
             <div className="font-medium text-green-600">
               {agentMetadata.totalCost} USDT
@@ -518,7 +512,6 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
         )}
       </div>
 
-      {/* USDT balance display */}
       <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
         <div className="font-medium mb-2">Your USDT Balance:</div>
         <p
@@ -560,9 +553,9 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
         <div className="font-medium mb-1">⚠️ Important Notice:</div>
         <p className="text-sm">
           By creating this hiring relationship, you authorize a transfer of{' '}
-          {agentMetadata.totalCost} USDT from your wallet to the contract. The
-          payment will be held in escrow until the hiring relationship is
-          completed.
+          {agentMetadata.totalCost} USDT from your wallet to the contract at a
+          fixed rate of 1 USDT per day. The payment will be held in escrow until
+          the hiring relationship is completed.
         </p>
       </div>
 
@@ -625,6 +618,19 @@ export const MergedAgentHiring: React.FC<MergedAgentHiringProps> = ({
           'Hire Agent Now'
         )}
       </button>
+
+      <AlertDialogComponent
+        isOpen={alertDialog.isOpen}
+        onClose={() => setAlertDialog({ ...alertDialog, isOpen: false })}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        type={alertDialog.type}
+        confirmText={alertDialog.confirmText}
+        cancelText={alertDialog.cancelText}
+        onConfirm={alertDialog.onConfirm}
+        onCancel={alertDialog.onCancel}
+        showCancel={alertDialog.showCancel}
+      />
     </div>
   );
 };

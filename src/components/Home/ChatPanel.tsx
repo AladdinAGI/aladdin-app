@@ -23,7 +23,7 @@ export default function MainChat() {
     {
       type: 'ai',
       // content: `👋 Hello! I'm Aladdin AI Assistant, I can help you with cryptocurrency management.
-      // Try saying '/stake amount[10000] APY[5] riskTolerance[15]' to stake your tokens!`,
+      // Try saying '/stake amount[1] APY[5] riskTolerance[15]' to stake your tokens!`,
       content: `👋Hello! I'm Aladdin AI Assistant, I can help you with hiring AI agents for cryptocurrency management.`,
       showTips: true,
     },
