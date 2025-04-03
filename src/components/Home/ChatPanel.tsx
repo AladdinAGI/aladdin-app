@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import { useAtom } from 'jotai';
 import { stakingParamsAtom, stakingStateAtom } from '@/store';
 import AlertDialogComponent, { AlertDialogProps } from '../ui/AlertDialog';
+import { StakingButton } from '../staking/StakingButton';
 
 // 消息接口
 interface Message {
@@ -16,6 +17,12 @@ interface Message {
   showTips?: boolean;
   id?: string;
   isLoading?: boolean;
+  stakingParams?: {
+    // 添加此字段
+    amount: string;
+    apy: string;
+    riskTolerance: string;
+  };
 }
 
 export default function MainChat() {
@@ -157,10 +164,36 @@ export default function MainChat() {
       );
     }
   };
+  // 处理质押按钮点击
+  const handleStakingButton = (params: {
+    amount: string;
+    apy: string;
+    riskTolerance: string;
+  }) => {
+    // 更新质押参数
+    setStakingParams((draft) => {
+      draft.amount = params.amount;
+      draft.apy = params.apy;
+      draft.riskTolerance = params.riskTolerance;
+    });
 
-  // 添加AI消息的辅助函数
-  const addAIMessage = (content: string) => {
-    setMessages((prev) => [...prev, { type: 'ai', content }]);
+    // 更新质押状态，激活质押UI
+    setStakingState(true);
+
+    // 添加确认消息
+    addAIMessage(
+      `Great! I'm setting up a staking plan for ${params.amount} USDT targeting a ${params.apy}% return with a risk tolerance of ${params.riskTolerance}%. Please check the Staking tab to complete the process.`
+    );
+  };
+  const addAIMessage = (content: string, stakingParams = null) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        type: 'ai',
+        content,
+        stakingParams: stakingParams || undefined, // 添加质押参数
+      },
+    ]);
   };
 
   const handleSend = async () => {
@@ -170,12 +203,15 @@ export default function MainChat() {
     const userMessage = { type: 'user' as const, content: userInput };
     setMessages((prev) => [...prev, userMessage]);
 
-    // 检查质押命令
+    // 检查质押命令格式 (/stake)
     if (checkForStakingCommand(userInput)) {
       handleStakingCommand(userInput);
       setInput('');
       return;
     }
+
+    // 移除了对自然语言质押请求的拦截
+    // 让 AI 正常处理所有类型的消息
 
     // 检查代理是否可用
     if (!agentRef.current) {
@@ -297,7 +333,6 @@ export default function MainChat() {
     }, 10);
   };
 
-  // 渲染消息内容函数
   const renderMessageContent = (message: Message) => {
     if (message.isLoading) {
       return (
@@ -311,9 +346,63 @@ export default function MainChat() {
       );
     }
 
+    // 获取消息前一条的内容
+    const currentIndex = messages.findIndex((m) => m === message);
+    const previousMessage =
+      currentIndex > 0 ? messages[currentIndex - 1] : null;
+
+    // 检查前一条消息是否是质押请求
+    const isPreviousStakingRequest =
+      previousMessage &&
+      previousMessage.type === 'user' &&
+      previousMessage.content.includes('USDT') &&
+      previousMessage.content.includes('return') &&
+      previousMessage.content.includes('risk tolerance');
+
+    // 从质押请求中提取参数
+    let stakingParams = null;
+    if (isPreviousStakingRequest && previousMessage) {
+      // 提取金额
+      const amountMatch = previousMessage.content.match(
+        /(\d{1,3}(,\d{3})*|\d+)\s*USDT/i
+      );
+      // 提取收益目标
+      const returnMatch = previousMessage.content.match(
+        /(\d+(?:\.\d+)?)%\s*(?:return|yield|apy)/i
+      );
+      // 提取风险容忍度
+      const riskMatch = previousMessage.content.match(
+        /risk\s+tolerance\s*(?:is|of)?\s*(\d+(?:\.\d+)?)%/i
+      );
+
+      const amount = amountMatch ? amountMatch[1].replace(/,/g, '') : '';
+      const apy = returnMatch ? returnMatch[1] : '';
+      const riskTolerance = riskMatch ? riskMatch[1] : '';
+
+      if (amount && apy && riskTolerance) {
+        stakingParams = { amount, apy, riskTolerance };
+      }
+    }
+
+    // 只有当当前消息是AI回复，且前一条是质押请求，且成功提取参数时，才显示按钮
+    const showStakingButton =
+      message.type === 'ai' &&
+      !message.isLoading &&
+      isPreviousStakingRequest &&
+      stakingParams;
+
     return (
       <div className="prose prose-sm max-w-none">
         <ReactMarkdown>{message.content}</ReactMarkdown>
+
+        {showStakingButton && stakingParams && (
+          <StakingButton
+            onClick={() => handleStakingButton(stakingParams)}
+            amount={Number(stakingParams.amount)}
+            apy={Number(stakingParams.apy)}
+            riskTolerance={Number(stakingParams.riskTolerance)}
+          />
+        )}
       </div>
     );
   };

@@ -7,6 +7,7 @@ import { useAtom } from 'jotai';
 import { stakingStateAtom } from '@/store';
 import { agentAddress } from '@/constants/contractInfo';
 import AlertDialogComponent from '../ui/AlertDialog';
+import { SmartPositionInfo } from '../staking/SmartPositionInfo';
 
 export default function ContractPanel() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -51,7 +52,7 @@ export default function ContractPanel() {
       <h2 className="text-base font-medium text-gray-900 mb-4">
         Staking Process
       </h2>
-
+      <SmartPositionInfo />
       <div className="mb-6 sticky top-0 bg-white pt-2 pb-4 z-10">
         <div className="flex items-center">
           <div

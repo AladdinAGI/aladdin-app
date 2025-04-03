@@ -143,6 +143,26 @@ const agentsData = {
       ],
       popular: false,
     },
+    {
+      id: 4,
+      name: 'StableCoin Yield Optimizer',
+      category: 'DeFi',
+      description:
+        'Advanced DeFi agent that manages stablecoin staking and optimizes yield strategies across multiple protocols',
+      imageUrl: '/images/agent-defi.png',
+      rating: 4.9,
+      reviews: 127,
+      price: 0.06,
+      tags: ['Staking', 'Yield Farming', 'Stablecoins', 'DeFi'],
+      abilities: [
+        'Protocol Integration',
+        'Yield Optimization',
+        'Risk Assessment',
+        'Auto-compounding',
+        'Portfolio Management',
+      ],
+      popular: true,
+    },
   ],
   zh: [
     {

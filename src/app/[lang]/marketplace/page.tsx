@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   EnterIcon,
   GridIcon,
@@ -35,13 +35,49 @@ interface AgentsDataType {
   [key: string]: Agent[];
 }
 
+// 修复初始数据中的重复ID问题
+function fixDuplicateIds(data: AgentsDataType): AgentsDataType {
+  const fixed = { ...data };
+
+  // 对每种语言的数据进行处理
+  Object.keys(fixed).forEach((lang) => {
+    // 深拷贝数组，避免修改原始对象
+    const agents = JSON.parse(JSON.stringify(fixed[lang]));
+    const seenIds = new Map(); // 用于追踪已经见过的ID
+
+    // 修复重复ID
+    for (let i = 0; i < agents.length; i++) {
+      const agent = agents[i];
+      if (seenIds.has(agent.id)) {
+        // 找到当前最大ID值（全局范围内）
+        const maxId = Math.max(
+          ...Object.values(fixed)
+            .flat()
+            .map((a: Agent) => a.id),
+          0
+        );
+        // 分配一个新ID (最大ID + 1)
+        agent.id = maxId + 1;
+      }
+      seenIds.set(agent.id, agent.name);
+    }
+
+    fixed[lang] = agents;
+  });
+
+  return fixed;
+}
+
 export default function AIMarketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [agentsData, setAgentsData] =
-    useState<AgentsDataType>(initialAgentsData);
+
+  // 初始化数据时，先修复可能的重复ID
+  const [agentsData, setAgentsData] = useState<AgentsDataType>(
+    fixDuplicateIds(initialAgentsData)
+  );
 
   // 获取当前语言
   const params = useParams();
@@ -90,47 +126,28 @@ export default function AIMarketplace() {
     { id: 'DeFi', name: t.categories.defi },
   ];
 
-  // Add DeFi agent if it doesn't exist yet
-  useEffect(() => {
-    const defiAgentExists = agentsData[lang].some(
-      (agent) => agent.category === 'DeFi'
-    );
+  // 生成全局唯一ID的函数
+  const generateUniqueId = () => {
+    // 获取所有语言中所有Agent的ID
+    const allIds = Object.values(agentsData)
+      .flat()
+      .map((agent) => agent.id);
 
-    if (!defiAgentExists) {
-      const defiAgent: Agent = {
-        id: agentsData[lang].length + 1,
-        name: 'StableCoin Yield Optimizer',
-        category: 'DeFi',
-        description:
-          'Advanced DeFi agent that manages stablecoin staking and optimizes yield strategies across multiple protocols',
-        imageUrl: '/images/agent-defi.png',
-        rating: 4.9,
-        reviews: 127,
-        price: 0.06,
-        tags: ['Staking', 'Yield Farming', 'Stablecoins', 'DeFi'],
-        abilities: [
-          'Protocol Integration',
-          'Yield Optimization',
-          'Risk Assessment',
-          'Auto-compounding',
-          'Portfolio Management',
-        ],
-        popular: true,
-      };
+    // 如果没有ID，从1开始
+    if (allIds.length === 0) return 1;
 
-      setAgentsData((prevData) => {
-        const updatedData = { ...prevData };
-        updatedData[lang] = [...updatedData[lang], defiAgent];
-        return updatedData;
-      });
-    }
-  }, [lang, agentsData]);
+    // 否则返回最大ID + 1
+    return Math.max(...allIds) + 1;
+  };
 
-  // Handle agent upload
+  // Handle agent upload - 修复后的代码
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAgentUpload = (formData: any) => {
+    // 使用全局唯一ID生成函数
+    const newId = generateUniqueId();
+
     const newAgent: Agent = {
-      id: agentsData[lang].length + 1,
+      id: newId,
       name: formData.name,
       category: formData.category,
       description: formData.description,
@@ -246,9 +263,9 @@ export default function AIMarketplace() {
             {agentsData[lang]
               .filter((agent) => agent.popular)
               .slice(0, 3)
-              .map((agent) => (
+              .map((agent, index) => (
                 <div
-                  key={agent.id}
+                  key={`${lang}-popular-${agent.id}-${index}`} // 添加多个唯一因素
                   className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-200"
                 >
                   <div className="p-4">
@@ -324,9 +341,9 @@ export default function AIMarketplace() {
           {/* 网格视图 */}
           {viewMode === 'grid' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredAgents.map((agent) => (
+              {filteredAgents.map((agent, index) => (
                 <div
-                  key={agent.id}
+                  key={`${lang}-grid-${agent.id}-${index}`} // 添加多个唯一因素
                   className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200"
                 >
                   <div className="p-4">
@@ -392,9 +409,9 @@ export default function AIMarketplace() {
           {/* 列表视图 */}
           {viewMode === 'list' && (
             <div className="space-y-4">
-              {filteredAgents.map((agent) => (
+              {filteredAgents.map((agent, index) => (
                 <div
-                  key={agent.id}
+                  key={`${lang}-list-${agent.id}-${index}`} // 添加多个唯一因素
                   className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200"
                 >
                   <div className="p-4 sm:p-6">
