@@ -1,7 +1,7 @@
 import { atom } from 'jotai';
 import { atomWithImmer } from 'jotai-immer';
 
-export const stakingStateAtom = atom<boolean>(false);
+export const stakingStateAtom = atom<boolean>(true);
 
 // 定义状态接口
 interface StakingParams {

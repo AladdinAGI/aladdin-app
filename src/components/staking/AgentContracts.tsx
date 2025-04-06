@@ -7,12 +7,12 @@ import {
 export default function AgentContracts() {
   const contracts = [
     {
-      agent: 'Stability Agent',
+      agent: 'Official Agent',
       type: 'USDC Pool',
       apy: '5.2%',
-      staked: '$2,000',
+      staked: '$100',
       status: 'Active',
-      lastInteraction: '2024-02-15',
+      lastInteraction: '2025-04-06',
       icon: Component1Icon,
     },
     {

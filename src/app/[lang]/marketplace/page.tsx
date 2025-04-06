@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import {
   EnterIcon,
   GridIcon,
@@ -271,9 +272,40 @@ export default function AIMarketplace() {
                   <div className="p-4">
                     <div className="flex items-start">
                       <div className="h-16 w-16 rounded-md bg-gray-200 flex-shrink-0 overflow-hidden relative">
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold">
-                          {agent.name.charAt(0)}
-                        </div>
+                        {agent.imageUrl ? (
+                          <Image
+                            src={agent.imageUrl}
+                            alt={agent.name}
+                            className="w-full h-full object-cover"
+                            width={64}
+                            height={64}
+                            onError={(
+                              e: React.SyntheticEvent<HTMLImageElement>
+                            ) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = '/images/agent-default.png';
+                              // 如果默认图像也加载失败，则回退到显示首字母
+                              target.onerror = () => {
+                                if (target.parentElement) {
+                                  target.style.display = 'none';
+                                  const fallbackEl =
+                                    target.parentElement.querySelector(
+                                      '.fallback-text'
+                                    );
+                                  if (fallbackEl) {
+                                    (fallbackEl as HTMLElement).style.display =
+                                      'flex';
+                                  }
+                                }
+                              };
+                            }}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold fallback-text">
+                            {agent.name.charAt(0)}
+                          </div>
+                        )}
                       </div>
                       <div className="ml-4">
                         <div className="flex items-center justify-between">
@@ -349,9 +381,40 @@ export default function AIMarketplace() {
                   <div className="p-4">
                     <div className="flex items-center">
                       <div className="h-12 w-12 rounded-md bg-gray-200 flex-shrink-0 overflow-hidden relative">
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold">
-                          {agent.name.charAt(0)}
-                        </div>
+                        {agent.imageUrl ? (
+                          <Image
+                            src={agent.imageUrl}
+                            alt={agent.name}
+                            height={48}
+                            width={48}
+                            className="w-full h-full object-cover"
+                            onError={(
+                              e: React.SyntheticEvent<HTMLImageElement>
+                            ) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = '/images/agent-default.png';
+                              // 如果默认图像也加载失败，则回退到显示首字母
+                              target.onerror = () => {
+                                if (target.parentElement) {
+                                  target.style.display = 'none';
+                                  const fallbackEl =
+                                    target.parentElement.querySelector(
+                                      '.fallback-text'
+                                    );
+                                  if (fallbackEl) {
+                                    (fallbackEl as HTMLElement).style.display =
+                                      'flex';
+                                  }
+                                }
+                              };
+                            }}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold fallback-text">
+                            {agent.name.charAt(0)}
+                          </div>
+                        )}
                       </div>
                       <div className="ml-3">
                         <h3 className="text-base font-medium text-gray-900">
@@ -417,9 +480,38 @@ export default function AIMarketplace() {
                   <div className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-start">
                       <div className="h-14 w-14 rounded-md bg-gray-200 flex-shrink-0 overflow-hidden relative">
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold">
-                          {agent.name.charAt(0)}
-                        </div>
+                        {agent.imageUrl ? (
+                          <Image
+                            src={agent.imageUrl}
+                            alt={agent.name}
+                            className="w-full h-full object-cover"
+                            onError={(
+                              e: React.SyntheticEvent<HTMLImageElement>
+                            ) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = '/images/agent-default.png';
+                              // 如果默认图像也加载失败，则回退到显示首字母
+                              target.onerror = () => {
+                                if (target.parentElement) {
+                                  target.style.display = 'none';
+                                  const fallbackEl =
+                                    target.parentElement.querySelector(
+                                      '.fallback-text'
+                                    );
+                                  if (fallbackEl) {
+                                    (fallbackEl as HTMLElement).style.display =
+                                      'flex';
+                                  }
+                                }
+                              };
+                            }}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-gray-500 font-bold fallback-text">
+                            {agent.name.charAt(0)}
+                          </div>
+                        )}
                       </div>
                       <div className="mt-4 sm:mt-0 sm:ml-6 flex-1">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
