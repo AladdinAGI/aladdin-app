@@ -39,6 +39,7 @@ export interface UseAaveStakingReturn {
   txHash: string | null;
   txError: string | null;
   alertDialog: Alert;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   stakingParams: any;
 
   // Actions
@@ -48,6 +49,7 @@ export interface UseAaveStakingReturn {
   handleDeposit: () => Promise<void>;
   handleReset: () => void;
   handleAlertClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   refetchBalance: () => Promise<any>;
 }
 
