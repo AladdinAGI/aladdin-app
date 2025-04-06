@@ -50,7 +50,7 @@ export default function LoginPage() {
   const [loginMode, setLoginMode] = useState(true); // true for login, false for register
   const [formData, setFormData] = useState({
     email: 'zhijia@aladdin.build',
-    password: '123456',
+    password: 'zhijia@aladdin.buildxx',
     confirmPassword: '',
     username: '',
   });
@@ -88,7 +88,7 @@ export default function LoginPage() {
         // 登录流程
         if (
           formData.email === 'zhijia@aladdin.build' &&
-          formData.password === '123456'
+          formData.password === 'zhijia@aladdin.buildxx'
         ) {
           // 登录成功
           setTimeout(() => {

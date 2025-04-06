@@ -389,6 +389,8 @@ export default function MainChat() {
       message.type === 'ai' &&
       !message.isLoading &&
       isPreviousStakingRequest &&
+      stakingParams?.apy !== undefined &&
+      Number(stakingParams.apy) < 10 &&
       stakingParams;
 
     return (
