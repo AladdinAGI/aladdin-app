@@ -337,7 +337,7 @@ export default function MainChat() {
         ...prev,
         {
           type: 'ai',
-          content: 'Comming Soon',
+          content: 'Coming Soon',
         },
       ]);
       return;

@@ -42,7 +42,7 @@ const createNavLinks = (t: Dictionary): NavLink[] => [
   {
     href: 'https://docs.google.com/forms/d/e/1FAIpQLSdxd36YCuwwpZ9gvy0XLKPoUTEgfZI_Rbg9Lv7xgY4yYKruSQ/viewform',
     pathMatch: 'Agent',
-    label: 'Summon Agent',
+    label: 'Submit Task',
   },
   {
     href: 'https://docs.google.com/forms/d/e/1FAIpQLSco0VH98fH7w8VzbXzkluZ3pzHtQnMRm6BiDiay-luMntKtAQ/viewform',
