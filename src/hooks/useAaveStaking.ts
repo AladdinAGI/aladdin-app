@@ -250,7 +250,7 @@ export const useAaveStaking = (
       setIsProcessing(false);
 
       // Immediately update the approval status
-      const amountToStake = parseUnits(stakingParams.amount.toString(), 6);
+      // const amountToStake = parseUnits(stakingParams.amount.toString(), 6);
       setIsApproved(true);
 
       // Refresh allowance data to confirm
