@@ -15,6 +15,10 @@ import DeFiPieChart from '@/components/dashboard/DeFiPieChart';
 import PriceHistoryChart from '@/components/dashboard/PriceHistoryChart';
 import Image from 'next/image';
 import useWalletInfo from '@/hooks/useWalletInfo';
+import { useHistory } from '@/hooks/useHistory';
+//checkForStakingCommand
+import { parseInvestmentInfo } from '@/utils/idnex';
+// import { HistoryEventBus } from './HistoryPanel';
 // DeFi Chart data interface
 interface DeFiChartData {
   type: string;
@@ -52,6 +56,21 @@ interface Message {
 export default function MainChat() {
   const { address, isConnected, ensName, ensAvatar } = useWalletInfo();
   const [avatarUrl, setAvatarUrl] = useState('/images/metamask.png');
+  const { addToHistory } = useHistory();
+  // useEffect(() => {
+  //   const unsubscribe = HistoryEventBus.onSelectQuestion((question) => {
+  //     setInput(question);
+  //     // Optional: Focus the input after selecting a history item
+  //     const inputEl = document.querySelector(
+  //       'input[type="text"]'
+  //     ) as HTMLInputElement;
+  //     if (inputEl) {
+  //       inputEl.focus();
+  //     }
+  //   });
+
+  //   return unsubscribe;
+  // }, []);
   const [messages, setMessages] = useState<Message[]>([
     {
       type: 'ai',
@@ -62,9 +81,8 @@ export default function MainChat() {
   const [, setStakingParams] = useAtom(stakingParamsAtom);
   // Alert dialog state
   const [alertOpen, setAlertOpen] = useState<boolean>(false);
-  const [alertProps, setAlertProps] = useState<
-    Omit<AlertDialogProps, 'isOpen' | 'onClose'>
-  >({
+  //setAlertProps
+  const [alertProps] = useState<Omit<AlertDialogProps, 'isOpen' | 'onClose'>>({
     title: '',
     message: '',
     type: 'info',
@@ -120,14 +138,6 @@ export default function MainChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // 检测用户消息中的质押命令
-  const checkForStakingCommand = (message: string): boolean => {
-    const trimmedMsg = message.trim().toLowerCase();
-    return (
-      trimmedMsg.startsWith('/stake') || trimmedMsg.includes('stake tokens')
-    );
-  };
-
   // Check if the message is about DeFi Protocol Analysis
   const checkForDeFiAnalysisQuery = (message: string): boolean => {
     const trimmedMsg = message.trim().toLowerCase();
@@ -156,53 +166,54 @@ export default function MainChat() {
     return true;
   };
 
-  const parseStakingCommand = (message: string) => {
-    const amount = message.match(/amount\s*\[(\d+)\]/i)?.[1];
-    const apy = message.match(/APY\s*\[(\d+(?:\.\d+)?)\]/i)?.[1];
-    const riskTolerance = message.match(
-      /riskTolerance\s*\[(\d+(?:\.\d+)?)\]/i
-    )?.[1];
+  // const parseStakingCommand = (message: string) => {
+  //   console.log('🐻🐻🐻🐻🐻', message);
+  //   const amount = message.match(/amount\s*\[(\d+)\]/i)?.[1];
+  //   const apy = message.match(/APY\s*\[(\d+(?:\.\d+)?)\]/i)?.[1];
+  //   const riskTolerance = message.match(
+  //     /riskTolerance\s*\[(\d+(?:\.\d+)?)\]/i
+  //   )?.[1];
 
-    if (!amount || !apy || !riskTolerance) {
-      let errorMsg = 'Failed to parse command: ';
-      const errorParams = [];
+  //   if (!amount || !apy || !riskTolerance) {
+  //     let errorMsg = 'Failed to parse command: ';
+  //     const errorParams = [];
 
-      if (!amount) errorParams.push('amount');
-      if (!apy) errorParams.push('APY');
-      if (!riskTolerance) errorParams.push('riskTolerance');
+  //     if (!amount) errorParams.push('amount');
+  //     if (!apy) errorParams.push('APY');
+  //     if (!riskTolerance) errorParams.push('riskTolerance');
 
-      errorMsg += errorParams.join(', ') + ' parameter(s) not found';
+  //     errorMsg += errorParams.join(', ') + ' parameter(s) not found';
 
-      // Show error dialog using component state
-      setAlertProps({
-        title: 'Error',
-        message: errorMsg,
-        type: 'error',
-        confirmText: 'OK',
-        showCancel: false,
-      });
-      setAlertOpen(true);
-      console.log('🐻🐻🐻🐻🐻🐻', amount, apy, riskTolerance);
+  //     // Show error dialog using component state
+  //     setAlertProps({
+  //       title: 'Error',
+  //       message: errorMsg,
+  //       type: 'error',
+  //       confirmText: 'OK',
+  //       showCancel: false,
+  //     });
+  //     setAlertOpen(true);
+  //     console.log('🐻🐻🐻🐻🐻🐻', amount, apy, riskTolerance);
 
-      return {
-        amount,
-        apy,
-        riskTolerance,
-        success: false,
-      };
-    }
-    setStakingParams((draft) => {
-      draft.amount = amount;
-      draft.apy = apy;
-      draft.riskTolerance = riskTolerance;
-    });
-    return {
-      amount,
-      apy,
-      riskTolerance,
-      success: true,
-    };
-  };
+  //     return {
+  //       amount,
+  //       apy,
+  //       riskTolerance,
+  //       success: false,
+  //     };
+  //   }
+  //   setStakingParams((draft) => {
+  //     draft.amount = amount;
+  //     draft.apy = apy;
+  //     draft.riskTolerance = riskTolerance;
+  //   });
+  //   return {
+  //     amount,
+  //     apy,
+  //     riskTolerance,
+  //     success: true,
+  //   };
+  // };
 
   // Parse DeFi Chart data from AI response
   const parseDeFiChartData = (content: string): DeFiChartData | null => {
@@ -247,23 +258,26 @@ export default function MainChat() {
   };
 
   // 处理质押命令
-  const handleStakingCommand = (message: string) => {
-    const params = parseStakingCommand(message);
-    if (params.success) {
-      console.log('🐻--->: ', params);
-      // 更新 jotai 状态
-      setStakingState(true);
+  // const handleStakingCommand = (message: string) => {
+  //   const params = parseStakingCommand(message);
 
-      // 添加回复消息
-      addAIMessage(
-        `I've prepared a staking proposal for you. You can stake ${params.amount} USDT with an expected APY of ${params.apy}%. Please visit the Staking tab to complete the process.`
-      );
-    } else {
-      addAIMessage(
-        'Sorry, I could not process your request. Please try again.'
-      );
-    }
-  };
+  //   if (params.success) {
+  //     console.log('🐻--->: ', params);
+  //     // 更新 jotai 状态
+  //     // setStakingState(true);
+  //     addAIMessage(
+  //       `I've prepared a staking proposal for you. You can stake ${params.amount} USDT with an expected APY of ${params.apy}%. Please visit the Staking tab to complete the process.`
+  //     );
+  //     // 添加回复消息
+  //     addAIMessage(
+  //       `I've prepared a staking proposal for you. You can stake ${params.amount} USDT with an expected APY of ${params.apy}%. Please visit the Staking tab to complete the process.`
+  //     );
+  //   } else {
+  //     addAIMessage(
+  //       'Sorry, I could not process your request. Please try again.'
+  //     );
+  //   }
+  // };
 
   // 处理质押按钮点击
   const handleStakingButton = (params: {
@@ -302,16 +316,32 @@ export default function MainChat() {
     if (!input.trim() || isLoading) return;
 
     const userInput = input.trim();
+
     const userMessage = { type: 'user' as const, content: userInput };
+
+    // Add to history
+    addToHistory(userInput);
+
     setMessages((prev) => [...prev, userMessage]);
 
     // 检查质押命令格式 (/stake)
-    if (checkForStakingCommand(userInput)) {
-      handleStakingCommand(userInput);
+    // if (checkForStakingCommand(userInput)) {
+    //   handleStakingCommand(userInput);
+    //   setInput('');
+    //   return;
+    // }
+    const params = parseInvestmentInfo(userInput);
+    if (params) {
       setInput('');
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: 'ai',
+          content: 'Comming Soon',
+        },
+      ]);
       return;
     }
-
     // 检查代理是否可用
     if (!agentRef.current) {
       console.error('Agent not initialized');
@@ -503,13 +533,14 @@ export default function MainChat() {
     }
 
     // 只有当当前消息是AI回复，且前一条是质押请求，且成功提取参数时，才显示按钮
-    const showStakingButton =
-      message.type === 'ai' &&
-      !message.isLoading &&
-      isPreviousStakingRequest &&
-      stakingParams?.apy !== undefined &&
-      Number(stakingParams.apy) < 10 &&
-      stakingParams;
+    // const showStakingButton =
+    //   message.type === 'ai' &&
+    //   !message.isLoading &&
+    //   isPreviousStakingRequest &&
+    //   stakingParams?.apy !== undefined &&
+    //   Number(stakingParams.apy) < 10 &&
+    //   stakingParams;
+    const showStakingButton = false;
 
     // Check if we should display the DeFi chart
     const showDeFiChart =
