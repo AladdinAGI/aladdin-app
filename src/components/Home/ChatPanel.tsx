@@ -5,10 +5,33 @@ import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { QuickQuestions } from './QuickQuestions';
 import { MastraClient } from '@mastra/client-js';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { useAtom } from 'jotai';
 import { stakingParamsAtom, stakingStateAtom } from '@/store';
 import AlertDialogComponent, { AlertDialogProps } from '../ui/AlertDialog';
 import { StakingButton } from '../staking/StakingButton';
+import DeFiPieChart from '@/components/dashboard/DeFiPieChart';
+import PriceHistoryChart from '@/components/dashboard/PriceHistoryChart';
+import Image from 'next/image';
+import useWalletInfo from '@/hooks/useWalletInfo';
+// DeFi Chart data interface
+interface DeFiChartData {
+  type: string;
+  data: {
+    name: string;
+    value: number;
+  }[];
+}
+
+// Price History Chart data interface
+interface PriceHistoryData {
+  type: string;
+  data: {
+    date: string;
+    price: number;
+  }[];
+}
 
 // 消息接口
 interface Message {
@@ -18,19 +41,20 @@ interface Message {
   id?: string;
   isLoading?: boolean;
   stakingParams?: {
-    // 添加此字段
     amount: string;
     apy: string;
     riskTolerance: string;
   };
+  defiChartData?: DeFiChartData | null; // Allow null for DeFi chart data
+  priceHistoryData?: PriceHistoryData | null; // Added price history data
 }
 
 export default function MainChat() {
+  const { address, isConnected, ensName, ensAvatar } = useWalletInfo();
+  const [avatarUrl, setAvatarUrl] = useState('/images/metamask.png');
   const [messages, setMessages] = useState<Message[]>([
     {
       type: 'ai',
-      // content: `👋 Hello! I'm Aladdin AI Assistant, I can help you with cryptocurrency management.
-      // Try saying '/stake amount[1] APY[5] riskTolerance[15]' to stake your tokens!`,
       content: `👋Hello! I'm Aladdin AI Assistant, I can help you with hiring AI agents for cryptocurrency management.`,
       showTips: true,
     },
@@ -61,6 +85,12 @@ export default function MainChat() {
   const threadIdRef = useRef<string>('thread-' + Date.now()); // 生成唯一线程ID
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    console.log('🐻🐻🐻🐻', ensName, ensAvatar);
+    if (isConnected && address && ensName && ensAvatar) {
+      setAvatarUrl(ensAvatar);
+    }
+  }, [address, ensAvatar, ensName, isConnected]);
 
   // 初始化 Mastra 客户端
   useEffect(() => {
@@ -96,6 +126,34 @@ export default function MainChat() {
     return (
       trimmedMsg.startsWith('/stake') || trimmedMsg.includes('stake tokens')
     );
+  };
+
+  // Check if the message is about DeFi Protocol Analysis
+  const checkForDeFiAnalysisQuery = (message: string): boolean => {
+    const trimmedMsg = message.trim().toLowerCase();
+    return (
+      trimmedMsg.includes('defi') ||
+      trimmedMsg.includes('protocol') ||
+      trimmedMsg.includes('tvl') ||
+      trimmedMsg.includes('yield')
+    );
+  };
+
+  // Check if the message is about Price History
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const checkForPriceHistoryQuery = (message: string): boolean => {
+    // const trimmedMsg = message.trim().toLowerCase();
+    // return (
+    //   trimmedMsg.includes('price history') ||
+    //   trimmedMsg.includes('historical price') ||
+    //   trimmedMsg.includes('price chart') ||
+    //   (trimmedMsg.includes('price') &&
+    //     (trimmedMsg.includes('7 day') ||
+    //       trimmedMsg.includes('30 day') ||
+    //       trimmedMsg.includes('week') ||
+    //       trimmedMsg.includes('month')))
+    // );
+    return true;
   };
 
   const parseStakingCommand = (message: string) => {
@@ -146,6 +204,48 @@ export default function MainChat() {
     };
   };
 
+  // Parse DeFi Chart data from AI response
+  const parseDeFiChartData = (content: string): DeFiChartData | null => {
+    try {
+      // Look for JSON object between ```json and ```
+      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+      if (!jsonMatch) return null;
+
+      const jsonStr = jsonMatch[1];
+      const chartData = JSON.parse(jsonStr);
+
+      if (chartData.type === 'defi_chart' && Array.isArray(chartData.data)) {
+        return chartData as DeFiChartData;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error parsing DeFi chart data:', error);
+      return null;
+    }
+  };
+
+  // Parse Price History data from AI response
+  const parsePriceHistoryData = (content: string): PriceHistoryData | null => {
+    try {
+      // Look for JSON object between ```json and ```
+      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+      if (!jsonMatch) return null;
+
+      const jsonStr = jsonMatch[1];
+      const chartData = JSON.parse(jsonStr);
+
+      if (chartData.type === 'price_chart' && Array.isArray(chartData.data)) {
+        return chartData as PriceHistoryData;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error parsing Price History chart data:', error);
+      return null;
+    }
+  };
+
   // 处理质押命令
   const handleStakingCommand = (message: string) => {
     const params = parseStakingCommand(message);
@@ -164,6 +264,7 @@ export default function MainChat() {
       );
     }
   };
+
   // 处理质押按钮点击
   const handleStakingButton = (params: {
     amount: string;
@@ -185,6 +286,7 @@ export default function MainChat() {
       `Great! I'm setting up a staking plan for ${params.amount} USDT targeting a ${params.apy}% return with a risk tolerance of ${params.riskTolerance}%. Please check the Staking tab to complete the process.`
     );
   };
+
   const addAIMessage = (content: string, stakingParams = null) => {
     setMessages((prev) => [
       ...prev,
@@ -209,9 +311,6 @@ export default function MainChat() {
       setInput('');
       return;
     }
-
-    // 移除了对自然语言质押请求的拦截
-    // 让 AI 正常处理所有类型的消息
 
     // 检查代理是否可用
     if (!agentRef.current) {
@@ -266,6 +365,21 @@ export default function MainChat() {
 
       console.log('API Response:', response.text);
 
+      // Check if the response contains DeFi chart data or Price History data
+      const isDeFiQuery = checkForDeFiAnalysisQuery(userInput);
+      const isPriceHistoryQuery = checkForPriceHistoryQuery(userInput);
+
+      let defiChartData = null;
+      let priceHistoryData = null;
+
+      if (isDeFiQuery) {
+        defiChartData = parseDeFiChartData(response.text);
+      }
+
+      if (isPriceHistoryQuery) {
+        priceHistoryData = parsePriceHistoryData(response.text);
+      }
+
       try {
         const data = JSON.parse(response.text);
         if (data.type === 'stake' || data.type === 'staking') {
@@ -283,13 +397,15 @@ export default function MainChat() {
                       "I'm sorry, I couldn't process that request.",
                     id: response.id,
                     isLoading: false,
+                    defiChartData: defiChartData,
+                    priceHistoryData: priceHistoryData, // Add price history data
                   }
                 : msg
             )
           );
         }
       } catch {
-        // 非JSON或其他错误
+        // 非JSON或其他错误 - 更新消息并添加图表数据（如果有）
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === loadingId
@@ -300,6 +416,8 @@ export default function MainChat() {
                     "I'm sorry, I couldn't process that request.",
                   id: response.id,
                   isLoading: false,
+                  defiChartData: defiChartData,
+                  priceHistoryData: priceHistoryData, // Add price history data
                 }
               : msg
           )
@@ -393,10 +511,71 @@ export default function MainChat() {
       Number(stakingParams.apy) < 10 &&
       stakingParams;
 
+    // Check if we should display the DeFi chart
+    const showDeFiChart =
+      message.type === 'ai' && message.defiChartData && !message.isLoading;
+
+    // Check if we should display the Price History chart
+    const showPriceHistoryChart =
+      message.type === 'ai' && message.priceHistoryData && !message.isLoading;
+
+    // Prepare the content by removing the JSON data if present
+    let displayContent = message.content;
+    if (showDeFiChart || showPriceHistoryChart) {
+      // Remove JSON code block from the content
+      displayContent = displayContent.replace(/```json\n[\s\S]*?\n```/, '');
+    }
+
     return (
       <div className="prose prose-sm max-w-none">
-        <ReactMarkdown>{message.content}</ReactMarkdown>
+        {showPriceHistoryChart && message.priceHistoryData && (
+          <div className="mb-4 p-4 bg-white rounded-lg shadow-md">
+            <PriceHistoryChart data={message.priceHistoryData.data} />
+          </div>
+        )}
 
+        {showDeFiChart && message.defiChartData && (
+          <div className="mb-4 p-4 bg-white rounded-lg shadow-md">
+            <h3 className="text-lg font-semibold mb-2">
+              DeFi Protocol Analysis
+            </h3>
+            <DeFiPieChart data={message.defiChartData.data} />
+          </div>
+        )}
+
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            table: ({ ...props }) => (
+              <table
+                className="min-w-full border border-gray-300 text-sm text-center my-2 rounded"
+                {...props}
+              />
+            ),
+            hr: () => (
+              <hr className="my-2 border-0 h-[1px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200" />
+            ),
+            thead: ({ ...props }) => (
+              <thead className="bg-gray-100 text-gray-700" {...props} />
+            ),
+            tr: ({ ...props }) => (
+              <tr className="border-b hover:bg-gray-50" {...props} />
+            ),
+            th: ({ ...props }) => (
+              <th className="px-4 py-2 font-medium border" {...props} />
+            ),
+            td: ({ ...props }) => (
+              <td className="px-4 py-2 border" {...props} />
+            ),
+            img: ({ ...props }) => (
+              // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+              <img className="inline-block w-6 h-6 align-middle" {...props} />
+            ),
+          }}
+        >
+          {displayContent}
+        </ReactMarkdown>
         {showStakingButton && stakingParams && (
           <StakingButton
             onClick={() => handleStakingButton(stakingParams)}
@@ -428,11 +607,34 @@ export default function MainChat() {
                 <div
                   className={`
               w-10 h-10 rounded flex-shrink-0
-              ${message.type === 'user' ? 'bg-[#95ec69]' : 'bg-[#1890ff]'}
+
+              ${
+                message.type === 'user'
+                  ? 'bg-[#95ec69] rounded-[6px]'
+                  : 'bg-[#F4F2FF] rounded-[6px] shadow-[0_1px_2px_rgba(0,0,0,0.1)]'
+              }
               flex items-center justify-center text-white text-sm
             `}
                 >
-                  {message.type === 'user' ? '👨🏻' : 'AI'}
+                  {/* ${message.type === 'user' ? 'bg-[#95ec69]' : 'bg-[#1890ff]'} */}
+                  {message.type === 'user' ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatarUrl}
+                      alt="AI"
+                      className="w-full h-full object-cover rounded-[6px]"
+                      width={64}
+                      height={64}
+                    ></img>
+                  ) : (
+                    <Image
+                      src="/images/aladdin.png"
+                      alt="AI"
+                      className="w-full h-full object-cover"
+                      width={64}
+                      height={64}
+                    ></Image>
+                  )}
                 </div>
                 <div
                   className={`

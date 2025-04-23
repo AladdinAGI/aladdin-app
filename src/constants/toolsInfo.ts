@@ -36,6 +36,21 @@ export const toolsInfo = [
     },
   },
   {
+    name: { en: '🏦 DeFi Protocol Analysis', zh: '🏦 DeFi协议分析' },
+    examples: {
+      en: [
+        'Show TVL for Uniswap',
+        'Top lending protocols by TVL',
+        'Compare yields across Ethereum DeFi',
+      ],
+      zh: [
+        '显示Uniswap的TVL',
+        '按TVL排名的顶级借贷协议',
+        '比较以太坊DeFi的收益率',
+      ],
+    },
+  },
+  {
     name: { en: '🏦 Stablecoin Staking', zh: '🏦 稳定币质押' },
     examples: {
       en: [

@@ -40,8 +40,8 @@ export default function Home() {
   }, [showContract, isContractMounted]);
 
   return (
-    <main className="px-4 py-3">
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
+    <main className="px-4 pt-3 ">
+      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 ">
         {/* History panel - always visible on md screens and up */}
         <div className="hidden md:flex md:flex-col bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] md:order-1 md:h-[calc(100vh-88px)]">
           <HistoryPanel />
